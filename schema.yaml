@@ -1,0 +1,173 @@
+# Machine-readable schema. Source of truth for types, properties, allowed values,
+# folders and names. schema.md holds the principles and conventions.
+#
+# Property value types:
+#   date      YYYY-MM-DD
+#   link      quoted wikilink, "[[Note]]"
+#   links     YAML list of quoted wikilinks
+#   string    free text
+#   strings   YAML list of free text
+#   year      four-digit integer
+#   kebab     lowercase words joined by hyphens
+# Optional properties may be omitted or left empty.
+# Properties not listed for a type are invalid, unless the type sets extra: allow.
+
+version: 1
+
+# Notes in these folders keep their type but skip the folder check.
+folder_exempt:
+  - archive/**
+  - areas/*/archive/**
+
+# Notes in these folders need no type.
+untyped:
+  - inbox/**
+  - _kit/**
+
+# Folder names: lowercase, hyphens.
+folder_name: '^[a-z0-9]+(-[a-z0-9]+)*$'
+
+types:
+  project:
+    folder: [projects/*]
+    required: [status, started]
+    optional: [area, target]
+    props:
+      status: {type: enum, values: [active, paused, done, cancelled]}
+      area: {type: link}
+      started: {type: date}
+      target: {type: date}
+
+  task:
+    folder: [projects/*, areas/*]
+    one_of: [project, area]
+    props:
+      project: {type: link}
+      area: {type: link}
+
+  area:
+    folder: [areas/*]
+    required: [status]
+    props:
+      status: {type: enum, values: [active, closed]}
+
+  meeting:
+    folder: [meetings]
+    # A single meeting is dated; a recurring series is one note per year.
+    name: ['^\d{4}-\d{2}-\d{2} .+', '^\d{4} .+']
+    required: [date, attendees]
+    optional: [project, area]
+    props:
+      date: {type: date}
+      project: {type: links}
+      area: {type: link}
+      attendees: {type: links}
+
+  incident:
+    folder: [areas/*]
+    name: ['^\d{4}-\d{2}-\d{2} .+']
+    required: [date, area]
+    props:
+      date: {type: date}
+      area: {type: link}
+
+  person:
+    folder: [people]
+    required: [context]
+    optional: [aliases]
+    props:
+      aliases: {type: strings}
+      context: {type: string}
+
+  impact:
+    folder: [records/impact]
+    name: ['^\d{4}-\d{2}-\d{2} .+']
+    required: [date, competency, cycle]
+    optional: [project]
+    props:
+      date: {type: date}
+      project: {type: link}
+      competency: {type: kebab}
+      cycle: {type: year}
+
+  decision:
+    folder: [records/decisions]
+    name: ['^\d{4}-\d{2}-\d{2} .+']
+    required: [date]
+    one_of: [project, area]
+    props:
+      date: {type: date}
+      project: {type: link}
+      area: {type: link}
+
+  1on1:
+    folder: [records/1on1]
+    name: ['^\d{4}-\d{2}-\d{2} .+']
+    required: [date, person]
+    props:
+      date: {type: date}
+      person: {type: link}
+
+  feedback:
+    folder: [records/feedback]
+    name: ['^\d{4}-\d{2}-\d{2} .+']
+    required: [date, person, direction, cycle, status]
+    props:
+      date: {type: date}
+      person: {type: link}
+      direction: {type: enum, values: [about-them, received]}
+      cycle: {type: year}
+      status: {type: enum, values: [open, delivered]}
+
+  cycle:
+    folder: [areas/career]
+    required: [cycle]
+    props:
+      cycle: {type: year}
+
+  story:
+    folder: [areas/career]
+    required: [competency, role]
+    props:
+      competency: {type: kebab}
+      role: {type: string}
+
+  reference:
+    folder: [reference, reference/*]
+    required: [topics]
+    props:
+      topics: {type: links}
+
+  hub:
+    folder: [reference, reference/*]
+
+  source:
+    folder: [sources]
+    required: [kind, author, status]
+    optional: [url, started, finished]
+    props:
+      kind: {type: enum, values: [book, article, paper, course, talk]}
+      author: {type: string}
+      url: {type: string}
+      status: {type: enum, values: [to-read, reading, done, abandoned]}
+      started: {type: date}
+      finished: {type: date}
+
+  option:
+    folder: [projects/*]
+    required: [status]
+    # Comparison-specific fields (price, location, ...) vary per project.
+    extra: allow
+    props:
+      status: {type: enum, values: [considering, visited, rejected, chosen]}
+
+  daily:
+    folder: [daily]
+    name: ['^\d{4}-\d{2}-\d{2}$']
+    required: [date]
+    props:
+      date: {type: date}
+
+# For notes whose name starts with a full date, that date must equal the `date`
+# property (applies to types with a `date` property; not to yearly meeting series).
+name_date_matches_property: true

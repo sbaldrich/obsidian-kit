@@ -13,6 +13,26 @@ Deferred on purpose. Revisit when a concrete need appears.
   the install with `--delete`).
   - First candidate: spaced repetition (flashcard template for `reference`).
 
+## Linting
+
+- Linter driven by `schema.yaml`: one Python file run with `uv run`, read-only,
+  output is rule id + relative path (no property values unless `--verbose`),
+  reads vault paths from `vaults.conf`. Agent rules should run it after notes
+  are created or edited.
+- Self-test: check that the example frontmatter block in `schema.md` passes
+  `schema.yaml`, so the two cannot drift.
+
+## To verify in a scratch vault
+
+- Do links inside properties (`project: "[[X]]"`) count for Bases
+  `file.hasLink(this.file)`? The docs don't say, and the link-based design
+  depends on it.
+- Dataview task status (untested, docs say tasks expose `status`, `checked`,
+  `completed` and `outlinks`). On a task note, its checkbox and status:
+  `TASK WHERE contains(outlinks, this.file.link)`. All in-progress tasks:
+  `TASK WHERE status = "/"`. Whether `this` works in TASK queries is not
+  covered by the docs.
+
 ## Plugins
 
 - Templater instead of core Templates: auto-prefix `YYYY-MM-DD` names, move
