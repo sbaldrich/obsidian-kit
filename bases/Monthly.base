@@ -1,0 +1,10 @@
+filters:
+  and:
+    - file.name.contains(this.file.name)
+    - category == "[[Monthly Notes]]"
+properties:
+  file.name:
+    displayName: month
+views:
+  - type: table
+    name: Table

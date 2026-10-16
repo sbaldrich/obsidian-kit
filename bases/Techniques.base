@@ -1,0 +1,17 @@
+filters:
+  and:
+    - category.contains("Techniques")
+    - not:
+        - file.name.contains("Template")
+views:
+  - type: table
+    name: All Techs
+    filters:
+      or:
+        - this.file.tags.contains('categories')
+        - file.techniques.contains(this.file.name)
+    order:
+      - file.name
+    sort:
+      - property: file.name
+        direction: ASC

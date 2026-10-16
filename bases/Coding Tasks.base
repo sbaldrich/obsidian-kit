@@ -1,0 +1,35 @@
+filters:
+  and:
+    - category.contains("Coding Tasks")
+    - not:
+        - file.name.contains("Template")
+        - file.tags.contains("solution")
+formulas:
+  created: start.toString()
+  status: if( status == 'solved', icon("circle-check"), if(status == 'attempted', icon("circle-x"), status) )
+  link: link(note.link, icon('external-link'))
+  solutionName: file.name + ' - Solution'
+  solution: if(link(formula.solutionName).asFile(), link(formula.solutionName, icon('circle-arrow-out-up-right')), link(formula.solutionName, icon('square-pen')))
+views:
+  - type: table
+    name: All Problems
+    filters:
+      or:
+        - this.file.tags.contains('categories')
+        - source == this.file.name
+        - techniques.contains(this.file.name)
+    groupBy:
+      property: source
+      direction: ASC
+    order:
+      - file.name
+      - formula.solution
+      - formula.status
+      - formula.link
+      - techniques
+      - tags
+    sort:
+      - property: techniques
+        direction: DESC
+      - property: file.name
+        direction: ASC

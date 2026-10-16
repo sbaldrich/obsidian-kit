@@ -1,0 +1,22 @@
+filters:
+  or:
+    - companies.contains(this.file.name)
+    - parents.contains(this.file.name)
+    - project.contains(this.file.name)
+    - project == this.file.name
+views:
+  - type: table
+    name: All notes
+    filters:
+      and:
+        - category == 'Notes'
+    order:
+      - created
+      - file.name
+    sort:
+      - property: created
+        direction: DESC
+      - property: start
+        direction: DESC
+    columnSize:
+      file.name: 269

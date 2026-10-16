@@ -1,0 +1,125 @@
+---
+cssclasses:
+  - homepage
+tags:
+  - dashboard
+---
+
+<img class="home-banner" src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=80" alt="Replace this banner with your own image URL or local attachment">
+
+<div class="home-hero">
+  <p class="home-kicker">Vault Homepage</p>
+  <h1>Home</h1>
+  <p>A stable landing page for planning, review, and quick navigation.</p>
+</div>
+
+> [!note] Today
+> `= date(today)`
+>
+> Use this page as the permanent entry point to the vault. Replace the banner, labels, and links whenever you want without changing the structure.
+
+## Navigation
+
+<div class="home-link-grid">
+  <a class="home-link-card" href="obsidian://open?vault=coach&file=Daily%20Notes">
+    <strong>Daily Notes</strong>
+    <span>Current day, capture, and reflection.</span>
+  </a>
+  <a class="home-link-card" href="obsidian://open?vault=coach&file=Projects">
+    <strong>Projects</strong>
+    <span>Active work, plans, and next actions.</span>
+  </a>
+  <a class="home-link-card" href="obsidian://open?vault=coach&file=Areas">
+    <strong>Areas</strong>
+    <span>Ongoing responsibilities and standards.</span>
+  </a>
+  <a class="home-link-card" href="obsidian://open?vault=coach&file=People">
+    <strong>People</strong>
+    <span>Relationships, meetings, and follow-ups.</span>
+  </a>
+  <a class="home-link-card" href="obsidian://open?vault=coach&file=Reading">
+    <strong>Reading</strong>
+    <span>Books, articles, and notes to revisit.</span>
+  </a>
+  <a class="home-link-card" href="obsidian://open?vault=coach&file=Inbox">
+    <strong>Inbox</strong>
+    <span>Quick capture and later triage.</span>
+  </a>
+</div>
+
+## Focus
+
+> [!tip] This Week
+> - [[Quarterly Review]]
+> - [[Weekly Review]]
+> - [[Top Priorities]]
+> - [[Someday Maybe]]
+
+> [!summary] Quick Access
+> - [[Projects]]
+> - [[Tasks]]
+> - [[Notes]]
+> - [[Meetings]]
+> - [[Finance]]
+> - [[Health]]
+
+---
+
+## Tasks Due Today
+
+```dataviewjs
+await dv.view("meta/views/tasks-due-today", {group: true})
+```
+
+## Coming Up Soon
+
+```dataviewjs
+await dv.view("meta/views/tasks-due-soon", {group: false})
+```
+
+## Birthdays
+
+```dataviewjs
+await dv.view("meta/views/birthdays")
+```
+
+---
+
+## Notes Pulse
+
+### Created This Week
+
+A quick view of what entered the vault during the current ISO week.
+
+![[Home - Created This Week.base]]
+
+### Recently Edited
+
+![[Home - Recently Edited.base]]
+
+---
+
+## Today's Events
+
+```base
+filters:
+  and:
+    - category.contains("Events")
+    - 'start == today()'
+views:
+  - type: table
+    name: Today's Events
+    order:
+      - file.name
+```
+
+## Upcoming Important People Dates
+
+![[Home - Upcoming People Dates.base]]
+
+
+## Notes To Self
+
+> [!swan] Keep This Page Lean
+> Use this note for navigation and visibility, not storage.
+> If a section starts growing, move the content into its own note and keep only the link here.

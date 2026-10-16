@@ -1,0 +1,39 @@
+filters:
+  and:
+    - category == "[[People]]"
+    - not:
+        - file.name.contains("Template")
+formulas:
+  upcomingEvents: note.events.map( [ ["desc", value.description], ["date", date(today().format("YYYY-") + value.date)] ]).map( value + [ [ "diff", (value.filter(value[0] == "date")[0][1] - today()).days ] ]).filter( value.filter(value[0] == "diff")[0][1] >= 0 ).map( value.filter(value[0] == "desc")[0][1] + " (" + value.filter(value[0] == "date")[0][1].relative() + ")" )
+properties:
+  file.name:
+    displayName: Name
+  birth_date:
+    displayName: Birthday
+  relation:
+    displayName: Relation
+  alias:
+    displayName: Alias
+  formula.upcomingEvents:
+    displayName: Upcoming
+views:
+  - type: table
+    name: All People
+    filters:
+      or:
+        - this.file.tags.contains('categories')
+        - relation.length > 0
+    order:
+      - file.name
+      - alias
+      - relation
+      - birth_date
+      - formula.upcomingEvents
+    sort:
+      - property: file.name
+        direction: ASC
+    columnSize:
+      file.name: 200
+      relation: 120
+      alias: 150
+      birth_date: 120

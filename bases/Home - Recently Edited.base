@@ -1,0 +1,24 @@
+filters:
+  and:
+    - '!file.name.contains("Template")'
+properties:
+  file.name:
+    displayName: Note
+  file.mtime:
+    displayName: Updated
+  category:
+    displayName: Category
+  tags:
+    displayName: Tags
+views:
+  - type: table
+    name: Recently Edited
+    order:
+      - file.name
+      - file.mtime
+      - category
+      - tags
+    sort:
+      - property: file.mtime
+        direction: DESC
+    limit: 5

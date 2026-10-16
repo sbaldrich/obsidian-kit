@@ -1,0 +1,237 @@
+.block-language-dataviewjs {
+    margin-left: 2.5%;
+    margin-right: 2.5%;
+}
+
+input[type="date"]{
+    background-color: rgba(0, 128, 255, 0.5);
+    padding: 0;
+    font-family: "Roboto Mono",monospace;
+    color: #b1adad;
+    font-size: var(--small-font-size);
+    border: none;
+    outline: none;
+    border-radius: 5px;
+}
+
+input[type="date"][disabled]{
+    background-color: rgba(96, 88, 88, 0.5);
+    padding: 0;
+    font-family: "Roboto Mono",monospace;
+    color: #b1adad;
+    font-size: var(--small-font-size);
+    border: none;
+    outline: none;
+    border-radius: 5px;
+}
+
+input[type="date"][disabled]::-webkit-calendar-picker-indicator {
+    display: none;
+    -webkit-appearance: none;
+}
+
+tbody.table-view-tbody > tr > td:nth-child(1) {
+    /*width: 45%;*/
+}
+
+div.block-language-dataviewjs.node-insert-event {
+    /*width: fit-content;*/
+    overflow-x: clip !important;
+}
+
+.callout[data-callout="star"] {
+    --callout-color: 255, 255, 0;
+    --callout-icon: star;
+}
+.callout[data-callout="swan"] {
+    --callout-color: 255, 255, 0;
+    --callout-icon: origami;
+}
+
+.block-language-dataviewjs:has(.callout) {
+    margin-left: 0%;
+}
+
+div.bases-td svg.svg-icon.lucide-circle-arrow-out-up-right {
+    color: var(--link-color);
+    height: 1.1em;
+    width: 1.1em;
+}
+
+div.bases-td svg.svg-icon.lucide-circle-check {
+    color: var(--color-green);
+    width: 1.2em;
+}
+
+div.bases-td svg.svg-icon.lucide-circle-x {
+    color: var(--color-yellow);
+    width: 1.2em;
+}
+
+div.bases-td svg.svg-icon.lucide-square-pen {
+    color: lightgray;
+    height: 1.1em;
+    width: 1.1em;
+}
+
+.homepage {
+    --home-border: color-mix(in srgb, var(--text-normal) 10%, transparent);
+    --home-surface: color-mix(in srgb, var(--background-secondary) 82%, white 2%);
+    --home-surface-strong: color-mix(in srgb, var(--background-secondary-alt) 88%, black 4%);
+    --home-accent: var(--interactive-accent);
+    overflow-x: hidden;
+}
+
+.homepage .home-banner {
+    width: 100%;
+    max-height: 280px;
+    object-fit: cover;
+    display: block;
+    border-radius: 24px;
+    margin: 0 0 1.25rem 0;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+}
+
+.homepage .home-hero {
+    margin: 0 auto 1.5rem auto;
+    margin-top: -2.25rem;
+    width: min(1100px, 90%);
+    max-width: 90%;
+    padding: 1.4rem 1.5rem;
+    border: 1px solid var(--home-border);
+    border-radius: 22px;
+    background: color-mix(in srgb, var(--background-primary) 78%, transparent);
+    backdrop-filter: blur(14px);
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
+
+.homepage .home-kicker {
+    margin: 0 0 0.35rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.homepage .home-hero h1 {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+}
+
+.homepage .home-hero p {
+    margin: 0.7rem 0 0 0;
+    color: var(--text-muted);
+}
+
+.homepage .home-link-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.9rem;
+    margin: 1.25rem 0 1.6rem 0;
+}
+
+.homepage .home-link-card {
+    display: block;
+    padding: 1rem 1rem 1.1rem 1rem;
+    border: 1px solid var(--home-border);
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--home-accent) 24%, transparent), transparent 35%),
+        linear-gradient(180deg, var(--home-surface), var(--home-surface-strong));
+    text-decoration: none;
+    color: var(--text-normal);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+    transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.homepage .home-link-card strong {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.homepage .home-link-card span {
+    display: block;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.homepage .home-link-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--home-accent) 45%, var(--home-border));
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.12);
+}
+
+.homepage hr {
+    border: none;
+    border-top: 1px solid var(--home-border);
+    margin: 1.8rem 0;
+}
+
+.homepage .markdown-embed,
+.homepage .internal-embed.markdown-embed {
+    margin: 0.75rem 0 1.35rem 0;
+    border: 1px solid var(--home-border);
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--home-accent) 16%, transparent), transparent 35%),
+        linear-gradient(180deg, var(--home-surface), var(--background-primary));
+    overflow: hidden;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+}
+
+.homepage .markdown-embed .markdown-embed-title,
+.homepage .internal-embed.markdown-embed .markdown-embed-title {
+    padding: 0.8rem 1rem 0.65rem 1rem;
+    border-bottom: 1px solid var(--home-border);
+    font-weight: 700;
+}
+
+.homepage .markdown-embed .markdown-embed-content,
+.homepage .internal-embed.markdown-embed .markdown-embed-content {
+    padding: 0.25rem 0.75rem 0.75rem 0.75rem;
+}
+
+.homepage .bases-view,
+.homepage .bases-embed {
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.homepage .bases-view table,
+.homepage .bases-embed table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.homepage .bases-view th,
+.homepage .bases-embed th {
+    color: var(--text-muted);
+    font-weight: 600;
+    background: color-mix(in srgb, var(--background-secondary) 84%, transparent);
+    border-bottom: 1px solid var(--home-border);
+}
+
+.homepage .bases-view th,
+.homepage .bases-view td,
+.homepage .bases-embed th,
+.homepage .bases-embed td {
+    padding: 0.7rem 0.8rem;
+}
+
+.homepage .bases-view td,
+.homepage .bases-embed td {
+    border-bottom: 1px solid color-mix(in srgb, var(--text-normal) 8%, transparent);
+}
+
+.homepage .bases-view tr:last-child td,
+.homepage .bases-embed tr:last-child td {
+    border-bottom: none;
+}
+
+.homepage .bases-view tr:hover td,
+.homepage .bases-embed tr:hover td {
+    background: color-mix(in srgb, var(--home-accent) 8%, transparent);
+}

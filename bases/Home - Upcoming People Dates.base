@@ -1,0 +1,27 @@
+filters:
+  and:
+    - category == "[[People]]"
+formulas:
+  events: note.events.map( [ ["desc", value.description], ["date", date(today().format("YYYY-") + value.date)] ]).map( value + [ [ "diff", (value.filter(value[0] == "date")[0][1] - today()).days ] ])
+  matches: formula.events.filter( value.filter(value[0] == "diff")[0][1] <= 10 && value.filter(value[0] == "diff")[0][1] >= 0 )
+  formattedMatches: formula.matches.map( [ value.filter(value[0] == "desc")[0][1], value.filter(value[0] == "date")[0][1].relative(), if( value.filter(value[0] == "diff")[0][1] == 0, "🎈", "" ) ])
+properties:
+  file.name:
+    displayName: Who
+  formula.formattedMatches:
+    displayName: What
+views:
+  - type: table
+    name: Upcoming People Dates
+    filters:
+      and:
+        - formula.matches.length > 0
+    order:
+      - file.name
+      - formula.formattedMatches
+    sort:
+      - property: formula.formattedMatches
+        direction: ASC
+    rowHeight: medium
+    columnSize:
+      file.name: 114
