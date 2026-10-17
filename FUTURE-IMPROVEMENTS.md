@@ -24,7 +24,7 @@ Deferred on purpose. Revisit when a concrete need appears.
   are created or edited.
 - Checks include the `task_checkbox` rules in `schema.yaml`: more than one
   non-`[>]` checkbox for a task note (error), none (warning), or one outside
-  the home note (error).
+  the home note (warning). Start lenient, tighten later.
 - Self-test: check that the example frontmatter block in `schema.md` passes
   `schema.yaml`, so the two cannot drift.
 
@@ -32,22 +32,20 @@ Deferred on purpose. Revisit when a concrete need appears.
 
 - Links inside properties (`project: "[[X]]"`) count for Bases
   `file.hasLink(this.file)`. `!file.inFolder("_kit")` hides the kit from bases.
-- Dataview can read `[/]` and `[-]`, join a checkbox to the linked note's
-  properties, and `this` works in TASK queries. Ruled out of the kit anyway.
+- Dataview (tested in a since-removed playground) can read `[/]` and `[-]`,
+  join a checkbox to the linked note's properties, and `this` works in TASK
+  queries.
 
-Pending: results of `playground-core/` (backlinks pane, embeds, embedded
-search with `task-todo` / `task-done` / regex, Bases).
+Pending: results of the core-only scenarios in `playground/` (backlinks pane,
+embeds, embedded search with `task-todo` / `task-done` / regex, Bases).
 
 ## Plugins
 
-Ruled out for the kit:
-
-- **Dataview.** Works (see above), but the kit stays plugin-free. Reconsider
-  only if a query can't be expressed with Bases, search or embeds.
-- **obsidian-checklist-plugin.** Would give one sidebar of tasks, but it
-  documents only `[ ]` and `[x]` (unknown behavior for `[/]`, `[-]`, `[>]`),
-  the kit can't install or configure plugins, and its maintenance looked thin.
-  A vault may install it on its own.
+The kit neither requires nor prescribes community plugins. Each vault decides
+for itself, for example Dataview (reads every checkbox status) or
+obsidian-checklist-plugin (one sidebar of tasks; documents only `[ ]` and
+`[x]`, so check how it treats `[/]`, `[-]` and `[>]`). The kit can't install or
+configure plugins anyway: that lives in each vault's `.obsidian/`.
 
 Possible later:
 

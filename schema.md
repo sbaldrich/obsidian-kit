@@ -18,7 +18,7 @@ patterns) are in `schema.yaml`. If this file and `schema.yaml` disagree,
   captures) and `_kit/`.
 - No `tags` property. Type and links do that job.
 - The kit needs no community plugins: core Obsidian only (Templates, Bases,
-  search, Backlinks).
+  search, Backlinks). Whether to add plugins is each vault's decision.
 - Base files are embedded by name (`![[Daily.base]]`), which resolves
   vault-wide. Kit base names must be unique in the vault.
 

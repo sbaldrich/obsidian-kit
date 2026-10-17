@@ -38,7 +38,7 @@ task_checkbox:
   rules:
     - {id: task-multiple-checkboxes, severity: error}    # >1 checkbox that isn't `moved`
     - {id: task-no-checkbox, severity: warning}          # none that isn't `moved`
-    - {id: task-checkbox-outside-home, severity: error}  # the one checkbox is not in the home note
+    - {id: task-checkbox-outside-home, severity: warning}  # the one checkbox is not in the home note
 
 # Folder names: lowercase, hyphens.
 folder_name: '^[a-z0-9]+(-[a-z0-9]+)*$'
