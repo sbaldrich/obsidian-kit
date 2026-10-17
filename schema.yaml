@@ -72,10 +72,10 @@ types:
     # A single meeting is dated; a recurring series is one note per year.
     name: ['^\d{4}-\d{2}-\d{2} .+', '^\d{4} .+']
     required: [date, attendees]
-    optional: [project, area]
+    optional: [projects, area]
     props:
       date: {type: date}
-      project: {type: links}
+      projects: {type: links}
       area: {type: link}
       attendees: {type: links}
 

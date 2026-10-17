@@ -17,6 +17,9 @@ patterns) are in `schema.yaml`. If this file and `schema.yaml` disagree,
 - Every note has a `type` property, except notes in `inbox/` (unprocessed
   captures) and `_kit/`.
 - No `tags` property. Type and links do that job.
+- A property name has one meaning and one value type across all note types
+  (Obsidian assigns property types per name, vault-wide). A list and a single
+  value get different names: `project` vs `projects`.
 - The kit needs no community plugins: core Obsidian only (Templates, Bases,
   search, Backlinks). Whether to add plugins is each vault's decision.
 - Base files are embedded by name (`![[Daily.base]]`), which resolves
@@ -101,7 +104,7 @@ status: active            # active | closed
 # meeting
 type: meeting
 date: 2026-10-02
-project: ["[[Invoicing migration]]"]   # optional, list
+projects: ["[[Invoicing migration]]"]  # optional, list
 area: "[[On-call]]"                    # optional
 attendees: ["[[Priya Shah]]"]
 
