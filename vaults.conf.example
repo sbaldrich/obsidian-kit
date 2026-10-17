@@ -1,0 +1,6 @@
+# One vault per line: name=path
+# Copy this file to vaults.conf (gitignored) and edit it.
+# Paths may start with ~/, or be relative to this file's directory.
+# Lines starting with # and blank lines are ignored.
+work=~/vaults/work
+personal=~/vaults/personal
