@@ -8,3 +8,11 @@ cycle: {{date:YYYY}}
 ## Self review
 
 ## Outcome
+
+## Impact
+
+![[Impact.base#This cycle]]
+
+## Feedback
+
+![[Feedback.base#This cycle]]

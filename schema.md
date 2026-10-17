@@ -12,8 +12,9 @@ patterns) are in `schema.yaml`. If this file and `schema.yaml` disagree,
 - Folders describe what a note *is*. Links and properties describe what it is
   *about*.
 - Queries are link-based (`file.hasLink(this.file)`), never folder-based.
-  Exception: bases exclude the kit with `!file.inFolder("_kit")`, because
-  templates carry real `type` values.
+  Exceptions: bases exclude the kit with `!file.inFolder("_kit")`, because
+  templates carry real `type` values; and the `Untyped` base looks into
+  `inbox/`, where untyped captures live.
 - Every note has a `type` property, except notes in `inbox/` (unprocessed
   captures) and `_kit/`.
 - No `tags` property. Type and links do that job.

@@ -9,8 +9,9 @@
     uv run tools/build.py --check    validate, then fail if outputs are stale
 
 Validation covers schema.yaml itself (every property declared once, one value
-type per property name) and the example frontmatter in schema.md. Only files
-inside the repo are read or written.
+type per property name), the base embeds in `sections` (the base and view must
+exist in bases/) and the example frontmatter in schema.md. Only files inside
+the repo are read or written.
 """
 import argparse
 import datetime
@@ -71,6 +72,15 @@ def validate_schema(schema: dict) -> list[str]:
             errors.append(f"{tname}.{name}: props entry is not required, optional or one_of")
         if not isinstance(spec.get("sections"), list):
             errors.append(f"{tname}: sections must be a list (may be empty)")
+        else:
+            for item in spec["sections"]:
+                ok = isinstance(item, str) or (
+                    isinstance(item, dict) and len(item) == 1
+                    and isinstance(next(iter(item.values())), list)
+                    and all(isinstance(e, str) for e in next(iter(item.values())))
+                )
+                if not ok:
+                    errors.append(f"{tname}: a sections item must be a heading or {{heading: [embeds]}}")
         for pattern in spec.get("name", []):
             try:
                 re.compile(pattern)
@@ -87,6 +97,45 @@ def validate_schema(schema: dict) -> list[str]:
             if name in seen and seen[name][1] != obs:
                 errors.append(f"{name}: Obsidian type conflict between {seen[name][0]} and {tname}")
             seen.setdefault(name, (tname, obs))
+    return errors
+
+
+def sections_of(spec: dict) -> list[tuple[str, list[str]]]:
+    """Body sections as (heading, embeds). An item is a heading, or {heading: [embeds]}."""
+    result = []
+    for item in spec["sections"]:
+        if isinstance(item, str):
+            result.append((item, []))
+        else:
+            ((heading, embeds),) = item.items()
+            result.append((heading, embeds))
+    return result
+
+
+EMBED = re.compile(r"^([^#\[\]|]+\.base)(?:#(.+))?$")
+
+
+def validate_embeds(root: Path, schema: dict) -> list[str]:
+    """Every embed must name an existing base in bases/ and, if given, an existing view."""
+    errors = []
+    views: dict[str, set[str]] = {}
+    for tname, spec in schema["types"].items():
+        for heading, embeds in sections_of(spec):
+            for embed in embeds:
+                m = EMBED.match(embed)
+                if not m:
+                    errors.append(f"{tname}/{heading}: malformed embed '{embed}'")
+                    continue
+                base, view = m.group(1), m.group(2)
+                path = root / "bases" / base
+                if not path.is_file():
+                    errors.append(f"{tname}/{heading}: no such base '{base}'")
+                    continue
+                if base not in views:
+                    data = yaml.safe_load(path.read_text()) or {}
+                    views[base] = {v.get("name") for v in data.get("views", [])}
+                if view and view not in views[base]:
+                    errors.append(f"{tname}/{heading}: base '{base}' has no view '{view}'")
     return errors
 
 
@@ -110,9 +159,11 @@ def render_template(type_name: str, spec: dict) -> str:
         lines.append(f"{name}: {value}" if value else f"{name}:")
     lines.append("---")
     out = "\n".join(lines) + "\n"
-    sections = spec["sections"]
-    if sections:
-        out += "\n" + "\n\n".join(f"## {s}" for s in sections) + "\n"
+    blocks = []
+    for heading, embeds in sections_of(spec):
+        blocks.append("\n\n".join([f"## {heading}"] + [f"![[{e}]]" for e in embeds]))
+    if blocks:
+        out += "\n" + "\n\n".join(blocks) + "\n"
     return out
 
 
@@ -210,6 +261,7 @@ def main() -> int:
     schema = load_schema(root)
     errors = validate_schema(schema)
     if not errors:
+        errors += validate_embeds(root, schema)
         errors += validate_examples(root, schema)
     if errors:
         print("\n".join(errors), file=sys.stderr)

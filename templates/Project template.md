@@ -11,3 +11,9 @@ target:
 ## Tasks
 
 ## Notes
+
+![[Linked notes.base#Tasks]]
+
+![[Linked notes.base#Meetings]]
+
+![[Linked notes.base#Decisions]]

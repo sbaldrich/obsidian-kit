@@ -8,3 +8,5 @@ status: active
 ## Tasks
 
 ## Notes
+
+![[Linked notes.base#By type]]

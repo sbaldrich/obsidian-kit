@@ -13,7 +13,9 @@
 # Properties not listed for a type are invalid, unless the type sets extra: allow.
 #
 # tools/build.py generates templates/ and types.json from this file. Template
-# property order follows `props`; `sections` are the body headings. Defaults
+# property order follows `props`; `sections` are the body headings. A section
+# is a heading, or {heading: [embeds]} where each embed is `Base.base` or
+# `Base.base#View` (the base and view must exist in bases/). Defaults
 # apply to required properties only: `date` and `started` are today, `cycle` is
 # the current year, enums start with their first value. Everything else is empty.
 # An empty property counts as absent (so one_of is satisfied by filling one).
@@ -52,7 +54,7 @@ folder_name: '^[a-z0-9]+(-[a-z0-9]+)*$'
 types:
   project:
     folder: [projects/*]
-    sections: [Goal, Tasks, Notes]
+    sections: [Goal, Tasks, {Notes: ["Linked notes.base#Tasks", "Linked notes.base#Meetings", "Linked notes.base#Decisions"]}]
     required: [status, started]
     optional: [area, target]
     props:
@@ -71,7 +73,7 @@ types:
 
   area:
     folder: [areas/*]
-    sections: [Scope, Tasks, Notes]
+    sections: [Scope, Tasks, {Notes: ["Linked notes.base#By type"]}]
     required: [status]
     props:
       status: {type: enum, values: [active, closed]}
@@ -100,7 +102,7 @@ types:
 
   person:
     folder: [people]
-    sections: [Notes]
+    sections: [{Notes: ["Linked notes.base#Timeline"]}]
     required: [context]
     optional: [aliases]
     props:
@@ -153,7 +155,7 @@ types:
 
   cycle:
     folder: [areas/career]
-    sections: [Goals, Self review, Outcome]
+    sections: [Goals, Self review, Outcome, {Impact: ["Impact.base#This cycle"]}, {Feedback: ["Feedback.base#This cycle"]}]
     required: [cycle]
     props:
       cycle: {type: year}
@@ -175,7 +177,7 @@ types:
 
   hub:
     folder: [reference, reference/*]
-    sections: [Notes]
+    sections: [{Notes: ["Linked notes.base#Reference"]}]
 
   source:
     folder: [sources]
@@ -201,7 +203,7 @@ types:
 
   daily:
     folder: [daily]
-    sections: []
+    sections: [{On this day: ["Daily.base"]}]
     name: ['^\d{4}-\d{2}-\d{2}$']
     required: [date]
     props:

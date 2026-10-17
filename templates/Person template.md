@@ -5,3 +5,5 @@ context:
 ---
 
 ## Notes
+
+![[Linked notes.base#Timeline]]
