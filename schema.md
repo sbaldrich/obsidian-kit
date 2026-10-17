@@ -17,6 +17,8 @@ patterns) are in `schema.yaml`. If this file and `schema.yaml` disagree,
 - Every note has a `type` property, except notes in `inbox/` (unprocessed
   captures) and `_kit/`.
 - No `tags` property. Type and links do that job.
+- The kit needs no community plugins: core Obsidian only (Templates, Bases,
+  search, Backlinks).
 - Base files are embedded by name (`![[Daily.base]]`), which resolves
   vault-wide. Kit base names must be unique in the vault.
 
@@ -48,7 +50,8 @@ Not every folder exists in every vault.
 - Dates: `YYYY-MM-DD`. Links: quoted wikilinks (`"[[Note]]"`). Lists: YAML lists.
 - Where allowed values are given, no other values are valid. Optional
   properties may be omitted.
-- Checkboxes: `[ ]` todo, `[/]` in progress, `[-]` cancelled, `[x]` done.
+- Checkboxes: `[ ]` todo, `[/]` in progress, `[-]` cancelled, `[x]` done,
+  `[>]` moved somewhere else.
 
 ## Note types
 
@@ -174,12 +177,18 @@ date: 2026-10-16
 
 ## Task status
 
-A task's status is its checkbox in the note that lists it (usually the project
-or area home note), written as a link to the task note. Task notes have no
-`status` property, so status is stored once.
+A task's status is its checkbox: a checkbox line that links to the task note.
+Task notes have no `status` property, so status is stored once.
 
-Bases cannot read checkboxes. A cross-note view of task status needs Dataview,
-which the kit doesn't include yet (see `FUTURE-IMPROVEMENTS.md`).
+**A task note has exactly one checkbox, in its home note** (the note its
+`project` or `area` property links to). The only checkboxes allowed elsewhere
+are `[>]` (moved): for example a daily note that carries the task forward, or
+a former home note after the task moved to another project. A `[>]` line is
+never the task's status.
+
+To see a task's status, open its home note, or the Backlinks pane of the task
+note, or embed the home note's line (`![[Home#^block-id]]`). Bases cannot read
+checkboxes.
 
 ## Linting
 

@@ -12,6 +12,9 @@ Deferred on purpose. Revisit when a concrete need appears.
   of an existing file. No cookiecutter (generate-once, doesn't fit re-running
   the install with `--delete`).
   - First candidate: spaced repetition (flashcard template for `reference`).
+- **CSS snippets.** Obsidian reads snippets only from `.obsidian/snippets/`,
+  and the installer writes only inside `_kit/`. A shipped snippet needs a
+  one-time manual symlink from `.obsidian/snippets/` to `_kit/snippets/`.
 
 ## Linting
 
@@ -19,30 +22,46 @@ Deferred on purpose. Revisit when a concrete need appears.
   output is rule id + relative path (no property values unless `--verbose`),
   reads vault paths from `vaults.conf`. Agent rules should run it after notes
   are created or edited.
+- Checks include the `task_checkbox` rules in `schema.yaml`: more than one
+  non-`[>]` checkbox for a task note (error), none (warning), or one outside
+  the home note (error).
 - Self-test: check that the example frontmatter block in `schema.md` passes
   `schema.yaml`, so the two cannot drift.
 
-## To verify in a scratch vault
+## Verified in the playgrounds
 
-- Do links inside properties (`project: "[[X]]"`) count for Bases
-  `file.hasLink(this.file)`? The docs don't say, and the link-based design
-  depends on it.
-- Dataview task status (untested, docs say tasks expose `status`, `checked`,
-  `completed` and `outlinks`). On a task note, its checkbox and status:
-  `TASK WHERE contains(outlinks, this.file.link)`. All in-progress tasks:
-  `TASK WHERE status = "/"`. Whether `this` works in TASK queries is not
-  covered by the docs.
+- Links inside properties (`project: "[[X]]"`) count for Bases
+  `file.hasLink(this.file)`. `!file.inFolder("_kit")` hides the kit from bases.
+- Dataview can read `[/]` and `[-]`, join a checkbox to the linked note's
+  properties, and `this` works in TASK queries. Ruled out of the kit anyway.
+
+Pending: results of `playground-core/` (backlinks pane, embeds, embedded
+search with `task-todo` / `task-done` / regex, Bases).
 
 ## Plugins
 
+Ruled out for the kit:
+
+- **Dataview.** Works (see above), but the kit stays plugin-free. Reconsider
+  only if a query can't be expressed with Bases, search or embeds.
+- **obsidian-checklist-plugin.** Would give one sidebar of tasks, but it
+  documents only `[ ]` and `[x]` (unknown behavior for `[/]`, `[-]`, `[>]`),
+  the kit can't install or configure plugins, and its maintenance looked thin.
+  A vault may install it on its own.
+
+Possible later:
+
 - Templater instead of core Templates: auto-prefix `YYYY-MM-DD` names, move
   notes to their folder, link pickers. Switch only if core Templates hurts.
-- Dataview, when a query can't be expressed as a base.
 - Obsidian CLI wrapper to create notes from templates (`scripts/obs` in the
   `legacy` tag).
 
 ## Note types and content
 
+- A hand-written Tasks note with embedded search queries (in progress, to do,
+  moved), plus a CSS snippet for `.internal-query`. Core search shows raw lines,
+  not clickable checkboxes, so check that first. Needs a decision on its type
+  (a `dashboard` type, or untyped).
 - Weekly, monthly and yearly notes.
 - Birthdays and recurring tasks.
 - CSS snippets (Bases icons, homepage styling).

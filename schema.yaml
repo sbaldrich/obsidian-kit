@@ -24,6 +24,22 @@ untyped:
   - inbox/**
   - _kit/**
 
+checkboxes:
+  " ": todo
+  "/": in-progress
+  "-": cancelled
+  "x": done
+  ">": moved
+
+# A task's checkbox is a checkbox line that links to the task note. The home
+# note is the note the task's `project` or `area` property links to.
+task_checkbox:
+  repeatable: [">"]
+  rules:
+    - {id: task-multiple-checkboxes, severity: error}    # >1 checkbox that isn't `moved`
+    - {id: task-no-checkbox, severity: warning}          # none that isn't `moved`
+    - {id: task-checkbox-outside-home, severity: error}  # the one checkbox is not in the home note
+
 # Folder names: lowercase, hyphens.
 folder_name: '^[a-z0-9]+(-[a-z0-9]+)*$'
 
