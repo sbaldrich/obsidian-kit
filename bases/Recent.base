@@ -1,0 +1,20 @@
+filters:
+  and:
+    - file.ext == "md"
+    - '!file.inFolder("_kit")'
+properties:
+  file.name:
+    displayName: Note
+  file.mtime:
+    displayName: Edited
+views:
+  - type: table
+    name: Recently edited
+    limit: 20
+    order:
+      - file.name
+      - type
+      - file.mtime
+    sort:
+      - property: file.mtime
+        direction: DESC

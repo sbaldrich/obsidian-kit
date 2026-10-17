@@ -1,0 +1,50 @@
+filters:
+  and:
+    - type == "feedback"
+    - '!file.inFolder("_kit")'
+properties:
+  file.name:
+    displayName: Feedback
+views:
+  - type: table
+    name: Open
+    filters:
+      and:
+        - status == "open"
+    order:
+      - date
+      - file.name
+      - person
+      - direction
+      - cycle
+    sort:
+      - property: date
+        direction: DESC
+  - type: table
+    name: By cycle
+    groupBy:
+      property: cycle
+      direction: DESC
+    order:
+      - date
+      - file.name
+      - person
+      - direction
+      - status
+    sort:
+      - property: date
+        direction: DESC
+  - type: table
+    name: This cycle
+    filters:
+      and:
+        - cycle == this.cycle
+    order:
+      - date
+      - file.name
+      - person
+      - direction
+      - status
+    sort:
+      - property: date
+        direction: DESC

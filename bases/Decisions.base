@@ -1,0 +1,18 @@
+filters:
+  and:
+    - type == "decision"
+    - '!file.inFolder("_kit")'
+properties:
+  file.name:
+    displayName: Decision
+views:
+  - type: table
+    name: All
+    order:
+      - date
+      - file.name
+      - project
+      - area
+    sort:
+      - property: date
+        direction: DESC

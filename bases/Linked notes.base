@@ -1,0 +1,103 @@
+filters:
+  and:
+    - file.hasLink(this.file)
+    - '!file.inFolder("_kit")'
+properties:
+  file.name:
+    displayName: Note
+views:
+  - type: table
+    name: By type
+    groupBy:
+      property: type
+      direction: ASC
+    order:
+      - file.name
+      - date
+    sort:
+      - property: date
+        direction: DESC
+  - type: table
+    name: Timeline
+    filters:
+      and:
+        - file.hasProperty("date")
+    order:
+      - date
+      - file.name
+      - type
+    sort:
+      - property: date
+        direction: DESC
+  - type: table
+    name: Tasks
+    filters:
+      and:
+        - type == "task"
+    order:
+      - file.name
+      - file.mtime
+    sort:
+      - property: file.name
+        direction: ASC
+  - type: table
+    name: Meetings
+    filters:
+      and:
+        - type == "meeting"
+    order:
+      - date
+      - file.name
+      - attendees
+    sort:
+      - property: date
+        direction: DESC
+  - type: table
+    name: Decisions
+    filters:
+      and:
+        - type == "decision"
+    order:
+      - date
+      - file.name
+    sort:
+      - property: date
+        direction: DESC
+  - type: table
+    name: Records
+    filters:
+      or:
+        - type == "impact"
+        - type == "1on1"
+        - type == "feedback"
+    order:
+      - date
+      - file.name
+      - type
+    sort:
+      - property: date
+        direction: DESC
+  - type: table
+    name: Options
+    filters:
+      and:
+        - type == "option"
+    order:
+      - file.name
+      - status
+      - price
+      - weeks
+    sort:
+      - property: file.name
+        direction: ASC
+  - type: table
+    name: Reference
+    filters:
+      and:
+        - type == "reference"
+    order:
+      - file.name
+      - topics
+    sort:
+      - property: file.name
+        direction: ASC

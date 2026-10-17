@@ -1,0 +1,47 @@
+filters:
+  and:
+    - type == "impact"
+    - '!file.inFolder("_kit")'
+properties:
+  file.name:
+    displayName: Impact
+views:
+  - type: table
+    name: By cycle
+    groupBy:
+      property: cycle
+      direction: DESC
+    order:
+      - date
+      - file.name
+      - competency
+      - project
+    sort:
+      - property: date
+        direction: DESC
+  - type: table
+    name: By competency
+    groupBy:
+      property: competency
+      direction: ASC
+    order:
+      - date
+      - file.name
+      - cycle
+      - project
+    sort:
+      - property: date
+        direction: DESC
+  - type: table
+    name: This cycle
+    filters:
+      and:
+        - cycle == this.cycle
+    order:
+      - date
+      - file.name
+      - competency
+      - project
+    sort:
+      - property: date
+        direction: DESC

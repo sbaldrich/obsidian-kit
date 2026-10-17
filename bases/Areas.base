@@ -1,0 +1,28 @@
+filters:
+  and:
+    - type == "area"
+    - '!file.inFolder("_kit")'
+properties:
+  file.name:
+    displayName: Area
+views:
+  - type: table
+    name: Active
+    filters:
+      and:
+        - status == "active"
+    order:
+      - file.name
+    sort:
+      - property: file.name
+        direction: ASC
+  - type: table
+    name: Closed
+    filters:
+      and:
+        - status == "closed"
+    order:
+      - file.name
+    sort:
+      - property: file.name
+        direction: ASC

@@ -1,0 +1,49 @@
+filters:
+  and:
+    - type == "project"
+    - '!file.inFolder("_kit")'
+properties:
+  file.name:
+    displayName: Project
+views:
+  - type: table
+    name: Active
+    filters:
+      and:
+        - status == "active"
+    order:
+      - file.name
+      - area
+      - started
+      - target
+    sort:
+      - property: target
+        direction: ASC
+  - type: table
+    name: Paused
+    filters:
+      and:
+        - status == "paused"
+    order:
+      - file.name
+      - area
+      - started
+      - target
+    sort:
+      - property: started
+        direction: DESC
+  - type: table
+    name: Closed
+    filters:
+      or:
+        - status == "done"
+        - status == "cancelled"
+    order:
+      - file.name
+      - status
+      - area
+      - started
+      - target
+    sort:
+      - property: started
+        direction: DESC

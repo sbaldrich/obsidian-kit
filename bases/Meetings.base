@@ -1,0 +1,32 @@
+filters:
+  and:
+    - type == "meeting"
+    - '!file.inFolder("_kit")'
+properties:
+  file.name:
+    displayName: Meeting
+views:
+  - type: table
+    name: All
+    order:
+      - date
+      - file.name
+      - projects
+      - area
+      - attendees
+    sort:
+      - property: date
+        direction: DESC
+  - type: table
+    name: Last 30 days
+    filters:
+      and:
+        - date >= today() - "30d"
+    order:
+      - date
+      - file.name
+      - projects
+      - attendees
+    sort:
+      - property: date
+        direction: DESC

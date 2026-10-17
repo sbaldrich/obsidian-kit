@@ -1,0 +1,33 @@
+filters:
+  and:
+    - '!file.inFolder("_kit")'
+    - or:
+        - type == "reference"
+        - type == "hub"
+properties:
+  file.name:
+    displayName: Note
+views:
+  - type: table
+    name: Reference notes
+    filters:
+      and:
+        - type == "reference"
+    order:
+      - file.name
+      - topics
+      - file.mtime
+    sort:
+      - property: file.name
+        direction: ASC
+  - type: table
+    name: Hubs
+    filters:
+      and:
+        - type == "hub"
+    order:
+      - file.name
+      - file.mtime
+    sort:
+      - property: file.name
+        direction: ASC

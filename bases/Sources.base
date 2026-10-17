@@ -1,0 +1,47 @@
+filters:
+  and:
+    - type == "source"
+    - '!file.inFolder("_kit")'
+properties:
+  file.name:
+    displayName: Source
+views:
+  - type: table
+    name: By status
+    groupBy:
+      property: status
+      direction: ASC
+    order:
+      - file.name
+      - kind
+      - author
+      - started
+      - finished
+    sort:
+      - property: file.name
+        direction: ASC
+  - type: table
+    name: Reading
+    filters:
+      and:
+        - status == "reading"
+    order:
+      - file.name
+      - kind
+      - author
+      - started
+    sort:
+      - property: started
+        direction: DESC
+  - type: table
+    name: To read
+    filters:
+      and:
+        - status == "to-read"
+    order:
+      - file.name
+      - kind
+      - author
+    sort:
+      - property: file.name
+        direction: ASC

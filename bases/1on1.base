@@ -1,0 +1,28 @@
+filters:
+  and:
+    - type == "1on1"
+    - '!file.inFolder("_kit")'
+properties:
+  file.name:
+    displayName: 1:1
+views:
+  - type: table
+    name: Timeline
+    order:
+      - date
+      - file.name
+      - person
+    sort:
+      - property: date
+        direction: DESC
+  - type: table
+    name: By person
+    groupBy:
+      property: person
+      direction: ASC
+    order:
+      - date
+      - file.name
+    sort:
+      - property: date
+        direction: DESC

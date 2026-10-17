@@ -1,0 +1,17 @@
+filters:
+  and:
+    - type == "person"
+    - '!file.inFolder("_kit")'
+properties:
+  file.name:
+    displayName: Name
+views:
+  - type: table
+    name: People
+    order:
+      - file.name
+      - aliases
+      - context
+    sort:
+      - property: file.name
+        direction: ASC

@@ -1,0 +1,22 @@
+filters:
+  and:
+    - '!file.inFolder("_kit")'
+    - file.path != this.file.path
+    - or:
+        - file.hasLink(this.file)
+        - date == this.date
+properties:
+  file.name:
+    displayName: Note
+views:
+  - type: table
+    name: On this day
+    groupBy:
+      property: type
+      direction: ASC
+    order:
+      - file.name
+      - date
+    sort:
+      - property: file.name
+        direction: ASC
