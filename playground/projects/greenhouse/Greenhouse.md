@@ -6,5 +6,5 @@ started: 2026-09-15
 
 ## Tasks
 
-- [/] [[Pot herbs]]
-- [ ] [[Fix vents]]
+- [/] [[Pot herbs]] ^pot-herbs
+- [x] [[Fix vents]]  [completion:: 2026-10-17]

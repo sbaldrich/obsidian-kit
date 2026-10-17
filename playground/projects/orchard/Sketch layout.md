@@ -3,9 +3,6 @@ type: task
 project: "[[Orchard]]"
 ---
 
-## Status (Dataview)
+## Status (section embed)
 
-```dataview
-TASK
-WHERE contains(outlinks, this.file.link)
-```
+![[Orchard#Tasks]]

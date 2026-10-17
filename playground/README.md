@@ -1,59 +1,54 @@
 # Playground
 
 Synthetic vault for testing kit ideas. Not part of the kit: never deployed.
-All names and data are invented.
+All names and data are invented. Its notes follow `schema.md`; community
+plugins, if any, are installed locally and not committed.
+
+Question: with task status stored only in the checkbox (task notes have no
+`status` property), how far do core features get you in seeing it?
 
 ## Setup
 
-1. Obsidian → Open folder as vault → this `playground/` folder.
-2. Scenario 1 and 4 need only core Obsidian (Bases).
-3. Scenarios 2 and 3 need Dataview: Settings → Community plugins → install and
-   enable Dataview. For the `dataviewjs` blocks, also turn on Dataview's
-   "Enable JavaScript Queries".
+Obsidian → Open folder as vault → this `playground/` folder. The scenarios
+below need only core features. Open the Backlinks pane (right sidebar) and turn on "Show more
+context" if it's off. Everything under `.obsidian/` is gitignored.
 
-Everything under `.obsidian/` is gitignored.
+## The problem you wanted to see
 
-## Scenario 1: links in properties and Bases
+`Order seedlings` is listed as `[/]` in [[Orchard]], and as `[x]` in
+[[2026-10-16]]. Nothing links the two lines. Open [[Order seedlings]] and look
+at the Backlinks pane: do you see both states, and can you tell which one is
+the task's real status?
 
-Open [[Alpha]]. Its base has two views, both filtered with
-`file.hasLink(this.file)`.
+## A. Backlinks pane
 
-| Note | How it links to Alpha | Expected if property links count |
-|---|---|---|
-| [[Beta]] | only `project: "[[Alpha]]"` in properties | listed |
-| [[Gamma]] | `[[Alpha]]` in the body | listed (control) |
-| [[Delta]] | no link | not listed (control) |
+Open any task note (try [[Order seedlings]], [[Hire tractor]], [[Pot herbs]]).
+Look for: the Linked mentions entries show the line with its checkbox.
 
-Report: is Beta listed? That decides whether the link-based design works with
-property links.
+## B. Embedding the line
 
-## Scenario 2: Dataview and checkbox status
+- Block embed: [[Order seedlings]] embeds the single checkbox line with a
+  block id. [[2026-10-17]] does the same in a daily note. Look for: does the
+  embedded checkbox render, and does ticking it change [[Orchard]]?
+- Section embed: [[Sketch layout]] embeds the whole `Tasks` section of
+  Orchard. Look for: all four states visible from one task note.
 
-[[Orchard]] and [[Greenhouse]] list task notes as checkboxes in all four
-states. Each task note embeds a Dataview query showing its own checkbox.
-[[Dataview tests]] has the cross-note queries.
+## C and D. Embedded search
 
-Report for each query: does it render, and are `[/]` and `[-]` reported
-correctly (not only `[ ]` and `[x]`)? Note whether `this` works inside TASK
-queries, and whether the task `status` is confused with the project's `status`
-property.
+[[Core queries]] has the queries. Look for:
 
-## Scenario 3: the same task checked in two places
+- C: `task-todo` and `task-done` are documented only for `[ ]` and `[x]`. In
+  which block does each task land, in particular `Order seedlings` `[/]` and
+  `Hire tractor` `[-]`?
+- D: the regex queries should list exactly the lines with `[/]` (and `[-]`
+  for the last one), across projects or only in Orchard.
 
-[[2026-10-16]] has `- [x] [[Order seedlings]]`, while [[Orchard]] has
-`- [/] [[Order seedlings]]`. The last query in [[Dataview tests]] lists task
-notes with more than one checkbox.
+## E. Bases
 
-Report: does the query catch it? If this case is realistic, the schema needs a
-rule such as "the checkbox in the home note is authoritative".
+[[Orchard]] has a base listing its task notes. Look for: it lists the notes
+and their `project` link, with no status column possible.
 
-## Scenario 4: excluding `_kit/`
+## How tasks appear in daily notes
 
-`_kit/templates/Template stub.md` has a real `type` and links to Alpha, like a
-real template would. In [[Alpha]], the first view excludes `_kit/` and the
-second doesn't.
-
-Report: the stub appears only in the second view.
-
-The stub is temporary. Installing the real kit into this vault runs
-`--delete` inside `_kit/`, which removes it.
+[[2026-10-16]] has a separate checkbox. [[2026-10-17]] has an embedded line and
+a plain mention. Compare the three styles.

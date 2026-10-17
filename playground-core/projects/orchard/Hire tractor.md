@@ -1,4 +1,0 @@
----
-type: task
-project: "[[Orchard]]"
----
