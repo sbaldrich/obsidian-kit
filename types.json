@@ -1,0 +1,25 @@
+{
+  "types": {
+    "aliases": "aliases",
+    "area": "text",
+    "attendees": "multitext",
+    "author": "text",
+    "competency": "text",
+    "context": "text",
+    "cycle": "number",
+    "date": "date",
+    "direction": "text",
+    "finished": "date",
+    "kind": "text",
+    "person": "text",
+    "project": "text",
+    "projects": "multitext",
+    "role": "text",
+    "started": "date",
+    "status": "text",
+    "target": "date",
+    "topics": "multitext",
+    "type": "text",
+    "url": "text"
+  }
+}

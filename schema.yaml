@@ -11,6 +11,12 @@
 #   kebab     lowercase words joined by hyphens
 # Optional properties may be omitted or left empty.
 # Properties not listed for a type are invalid, unless the type sets extra: allow.
+#
+# tools/build.py generates templates/ and types.json from this file. Template
+# property order follows `props`; `sections` are the body headings. Defaults
+# apply to required properties only: `date` and `started` are today, `cycle` is
+# the current year, enums start with their first value. Everything else is empty.
+# An empty property counts as absent (so one_of is satisfied by filling one).
 
 version: 1
 
@@ -46,6 +52,7 @@ folder_name: '^[a-z0-9]+(-[a-z0-9]+)*$'
 types:
   project:
     folder: [projects/*]
+    sections: [Goal, Tasks, Notes]
     required: [status, started]
     optional: [area, target]
     props:
@@ -56,6 +63,7 @@ types:
 
   task:
     folder: [projects/*, areas/*]
+    sections: [Context, Steps]
     one_of: [project, area]
     props:
       project: {type: link}
@@ -63,12 +71,14 @@ types:
 
   area:
     folder: [areas/*]
+    sections: [Scope, Tasks, Notes]
     required: [status]
     props:
       status: {type: enum, values: [active, closed]}
 
   meeting:
     folder: [meetings]
+    sections: [Notes, Actions]
     # A single meeting is dated; a recurring series is one note per year.
     name: ['^\d{4}-\d{2}-\d{2} .+', '^\d{4} .+']
     required: [date, attendees]
@@ -81,6 +91,7 @@ types:
 
   incident:
     folder: [areas/*]
+    sections: [Summary, Timeline, Follow-ups]
     name: ['^\d{4}-\d{2}-\d{2} .+']
     required: [date, area]
     props:
@@ -89,6 +100,7 @@ types:
 
   person:
     folder: [people]
+    sections: [Notes]
     required: [context]
     optional: [aliases]
     props:
@@ -97,6 +109,7 @@ types:
 
   impact:
     folder: [records/impact]
+    sections: [What I did, Result]
     name: ['^\d{4}-\d{2}-\d{2} .+']
     required: [date, competency, cycle]
     optional: [project]
@@ -108,6 +121,7 @@ types:
 
   decision:
     folder: [records/decisions]
+    sections: [Context, Options, Decision, Consequences]
     name: ['^\d{4}-\d{2}-\d{2} .+']
     required: [date]
     one_of: [project, area]
@@ -118,6 +132,7 @@ types:
 
   1on1:
     folder: [records/1on1]
+    sections: [Topics, Notes, Actions]
     name: ['^\d{4}-\d{2}-\d{2} .+']
     required: [date, person]
     props:
@@ -126,6 +141,7 @@ types:
 
   feedback:
     folder: [records/feedback]
+    sections: [Feedback, Context]
     name: ['^\d{4}-\d{2}-\d{2} .+']
     required: [date, person, direction, cycle, status]
     props:
@@ -137,12 +153,14 @@ types:
 
   cycle:
     folder: [areas/career]
+    sections: [Goals, Self review, Outcome]
     required: [cycle]
     props:
       cycle: {type: year}
 
   story:
     folder: [areas/career]
+    sections: [Situation, Task, Action, Result]
     required: [competency, role]
     props:
       competency: {type: kebab}
@@ -150,15 +168,18 @@ types:
 
   reference:
     folder: [reference, reference/*]
+    sections: []
     required: [topics]
     props:
       topics: {type: links}
 
   hub:
     folder: [reference, reference/*]
+    sections: [Notes]
 
   source:
     folder: [sources]
+    sections: [Summary, Takeaways]
     required: [kind, author, status]
     optional: [url, started, finished]
     props:
@@ -171,6 +192,7 @@ types:
 
   option:
     folder: [projects/*]
+    sections: [Pros, Cons, Notes]
     required: [status]
     # Comparison-specific fields (price, location, ...) vary per project.
     extra: allow
@@ -179,6 +201,7 @@ types:
 
   daily:
     folder: [daily]
+    sections: []
     name: ['^\d{4}-\d{2}-\d{2}$']
     required: [date]
     props:
