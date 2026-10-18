@@ -2,7 +2,7 @@
 type: project
 status: active
 area: "[[Home]]"
-started: 2026-08-15
+start: 2026-08-15
 target:
 ---
 

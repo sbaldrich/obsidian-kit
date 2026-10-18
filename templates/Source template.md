@@ -4,7 +4,7 @@ kind: book
 author:
 url:
 status: to-read
-started:
+start:
 finished:
 ---
 

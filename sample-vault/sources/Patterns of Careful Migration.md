@@ -4,7 +4,7 @@ kind: book
 author: "Ada Lindqvist"
 url:
 status: reading
-started: 2026-09-20
+start: 2026-09-20
 finished:
 ---
 

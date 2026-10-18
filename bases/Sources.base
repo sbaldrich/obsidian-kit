@@ -15,7 +15,7 @@ views:
       - file.name
       - kind
       - author
-      - started
+      - start
       - finished
     sort:
       - property: file.name
@@ -29,9 +29,9 @@ views:
       - file.name
       - kind
       - author
-      - started
+      - start
     sort:
-      - property: started
+      - property: start
         direction: DESC
   - type: table
     name: To read

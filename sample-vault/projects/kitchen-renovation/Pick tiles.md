@@ -8,3 +8,5 @@ project: "[[Kitchen renovation]]"
 
 
 ## Steps
+
+Looked at samples on [[2026-10-16]].

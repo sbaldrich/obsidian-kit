@@ -14,7 +14,7 @@ views:
     order:
       - file.name
       - area
-      - started
+      - start
       - target
     sort:
       - property: target
@@ -27,10 +27,10 @@ views:
     order:
       - file.name
       - area
-      - started
+      - start
       - target
     sort:
-      - property: started
+      - property: start
         direction: DESC
   - type: table
     name: Closed
@@ -42,8 +42,8 @@ views:
       - file.name
       - status
       - area
-      - started
+      - start
       - target
     sort:
-      - property: started
+      - property: start
         direction: DESC

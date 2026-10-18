@@ -91,7 +91,7 @@ Examples of each type's frontmatter. Comments give the allowed values.
 type: project
 status: active            # active | paused | done | cancelled
 area: "[[Payments]]"      # optional
-started: 2026-09-01
+start: 2026-09-01
 target: 2026-12-15        # optional
 
 # task (status lives in the checkbox linking to this note)
@@ -166,7 +166,7 @@ kind: book                # book | article | paper | course | talk
 author: "Vlad Khononov"
 url:                      # optional
 status: reading           # to-read | reading | done | abandoned
-started: 2026-09-20       # optional
+start: 2026-09-20       # optional
 finished:                 # optional
 
 # option

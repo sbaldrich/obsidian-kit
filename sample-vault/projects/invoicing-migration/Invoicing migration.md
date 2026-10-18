@@ -2,7 +2,7 @@
 type: project
 status: active
 area: "[[Payments]]"
-started: 2026-09-01
+start: 2026-09-01
 target: 2026-12-15
 ---
 

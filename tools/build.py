@@ -10,8 +10,10 @@
 
 Validation covers schema.yaml itself (every property declared once, one value
 type per property name), the base embeds in `sections` (the base and view must
-exist in bases/) and the example frontmatter in schema.md. Only files inside
-the repo are read or written.
+exist in bases/), the base links in the hand-written templates/*checklist.md,
+and the example frontmatter in schema.md. Generated templates are named
+"<Type> template.md"; the checklists are left alone. Only files inside the
+repo are read or written.
 """
 import argparse
 import datetime
@@ -113,12 +115,27 @@ def sections_of(spec: dict) -> list[tuple[str, list[str]]]:
 
 
 EMBED = re.compile(r"^([^#\[\]|]+\.base)(?:#(.+))?$")
+BASE_LINK = re.compile(r"\[\[([^\[\]#|]+\.base)(?:#([^\[\]|]+))?\]\]")
+CHECKLIST_SUFFIX = " checklist.md"
+
+
+def base_ref_error(root: Path, base: str, view: str | None, cache: dict[str, set[str]]) -> str | None:
+    """None if bases/<base> exists and has the view (when given), else a message."""
+    path = root / "bases" / base
+    if not path.is_file():
+        return f"no such base '{base}'"
+    if base not in cache:
+        data = yaml.safe_load(path.read_text()) or {}
+        cache[base] = {v.get("name") for v in data.get("views", [])}
+    if view and view not in cache[base]:
+        return f"base '{base}' has no view '{view}'"
+    return None
 
 
 def validate_embeds(root: Path, schema: dict) -> list[str]:
     """Every embed must name an existing base in bases/ and, if given, an existing view."""
     errors = []
-    views: dict[str, set[str]] = {}
+    cache: dict[str, set[str]] = {}
     for tname, spec in schema["types"].items():
         for heading, embeds in sections_of(spec):
             for embed in embeds:
@@ -126,23 +143,29 @@ def validate_embeds(root: Path, schema: dict) -> list[str]:
                 if not m:
                     errors.append(f"{tname}/{heading}: malformed embed '{embed}'")
                     continue
-                base, view = m.group(1), m.group(2)
-                path = root / "bases" / base
-                if not path.is_file():
-                    errors.append(f"{tname}/{heading}: no such base '{base}'")
-                    continue
-                if base not in views:
-                    data = yaml.safe_load(path.read_text()) or {}
-                    views[base] = {v.get("name") for v in data.get("views", [])}
-                if view and view not in views[base]:
-                    errors.append(f"{tname}/{heading}: base '{base}' has no view '{view}'")
+                problem = base_ref_error(root, m.group(1), m.group(2), cache)
+                if problem:
+                    errors.append(f"{tname}/{heading}: {problem}")
+    return errors
+
+
+def validate_checklists(root: Path) -> list[str]:
+    """Hand-written templates/*checklist.md may link to bases; those links must resolve."""
+    errors = []
+    cache: dict[str, set[str]] = {}
+    folder = root / "templates"
+    for path in sorted(folder.glob("*" + CHECKLIST_SUFFIX)) if folder.is_dir() else []:
+        for base, view in BASE_LINK.findall(path.read_text()):
+            problem = base_ref_error(root, base, view or None, cache)
+            if problem:
+                errors.append(f"templates/{path.name}: {problem}")
     return errors
 
 
 def default_value(name: str, prop: dict, required: bool) -> str:
     if not required:
         return ""
-    if prop["type"] == "date" and name in ("date", "started"):
+    if prop["type"] == "date" and name in ("date", "start"):
         return "{{date:YYYY-MM-DD}}"
     if prop["type"] == "year" and name == "cycle":
         return "{{date:YYYY}}"
@@ -262,6 +285,7 @@ def main() -> int:
     errors = validate_schema(schema)
     if not errors:
         errors += validate_embeds(root, schema)
+        errors += validate_checklists(root)
         errors += validate_examples(root, schema)
     if errors:
         print("\n".join(errors), file=sys.stderr)

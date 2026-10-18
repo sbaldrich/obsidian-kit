@@ -1,7 +1,7 @@
 ---
 type: project
 status: active
-started: 2026-10-01
+start: 2026-10-01
 ---
 
 ## Tasks

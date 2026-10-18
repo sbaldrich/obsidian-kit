@@ -18,7 +18,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 CONF="${KIT_CONF:-$REPO/vaults.conf}"
 # Whitelist of repo paths that are deployed. Anything else stays in the repo.
-DEPLOY="templates bases checklists agents schema.md schema.yaml types.json"
+DEPLOY="templates bases agents schema.md schema.yaml types.json"
 
 DRY_RUN=0
 FORCE=0

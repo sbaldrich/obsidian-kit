@@ -15,7 +15,7 @@
     "project": "text",
     "projects": "multitext",
     "role": "text",
-    "started": "date",
+    "start": "date",
     "status": "text",
     "target": "date",
     "topics": "multitext",

@@ -2,7 +2,7 @@
 type: project
 status: active
 area:
-started: {{date:YYYY-MM-DD}}
+start: {{date:YYYY-MM-DD}}
 target:
 ---
 
