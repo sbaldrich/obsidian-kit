@@ -20,6 +20,7 @@ notes, Bases, Backlinks). Whether a vault adds plugins is its own decision.
 | `bases/` | Reusable `.base` files | yes |
 | `agents/common.md` | Rules for AI agents, shared by all vaults | yes |
 | `install.sh`, `vaults.conf.example` | The installer | no |
+| `tools/lint.py`, `tools/kitlib.py` | The linter and its helper | yes |
 | `tools/build.py` | Generates `templates/` and `types.json` | no |
 | `tests/` | Tests for the installer | no |
 | `playground/`, `sample-vault/` | Synthetic vaults for trying things | no |
@@ -76,6 +77,12 @@ Obsidian reads these from `.obsidian/`, which the installer never touches.
   embedded in notes and use `this`; the templates already embed them.
 - **Checklists:** insert a `<Name> checklist` into a note (a daily note works)
   like any template, and tick it there.
+- **Lint:** `uv run _kit/tools/lint.py` from the vault checks every note
+  against the schema (needs `uv`). It only reads, and prints rule ids and
+  paths, not note content; `--verbose` adds the offending values on stderr,
+  `--strict` makes warnings fail too. From the kit repo:
+  `uv run tools/lint.py work` (a name from `vaults.conf`) or
+  `uv run tools/lint.py ./some/vault`.
 - **Tasks:** a task note has one checkbox, in its home note. See
   `schema.md` for the full rule.
 
@@ -93,8 +100,8 @@ Obsidian reads these from `.obsidian/`, which the installer never touches.
   don't show up in them, and keep base names unique (embeds resolve by name
   across the vault). Renaming a view means updating `schema.yaml`; the build
   tells you.
-- **Installer tests:** `bash tests/test-install.sh` (fake vaults in a temporary
-  directory; it never touches a real vault).
+- **Tests:** `bash tests/test-install.sh` and `uv run tests/test_lint.py`
+  (fake vaults in a temporary directory; they never touch a real vault).
 - **Try things:** `playground/` and `sample-vault/` are synthetic vaults. For
   `sample-vault/`, `bash sample-vault/setup.sh` writes its local Obsidian
   config and installs the kit into it. Open either folder in Obsidian as a

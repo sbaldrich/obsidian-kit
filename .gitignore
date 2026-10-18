@@ -3,3 +3,4 @@ vaults.conf
 playground/.obsidian/
 sample-vault/.obsidian/
 sample-vault/_kit/
+__pycache__/

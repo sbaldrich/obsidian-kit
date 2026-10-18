@@ -40,6 +40,11 @@ agent file adds vault-specific rules on top of these and points here.
 - Notes in `inbox/` are unprocessed. To process one, give it a `type`, apply
   the template's shape, and move it to its folder. Ask first.
 
+## Check your work
+
+- After creating or editing notes, run `uv run _kit/tools/lint.py` from the
+  vault root. Fix every error. Mention warnings you did not fix.
+
 ## Links
 
 - Link generously: the first mention of a person, project, area or concept

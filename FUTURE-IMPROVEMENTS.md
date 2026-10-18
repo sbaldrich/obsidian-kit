@@ -18,15 +18,10 @@ Deferred on purpose. Revisit when a concrete need appears.
 
 ## Linting
 
-- Linter driven by `schema.yaml`: one Python file run with `uv run`, read-only,
-  output is rule id + relative path (no property values unless `--verbose`),
-  reads vault paths from `vaults.conf`. Agent rules should run it after notes
-  are created or edited.
-- Checks include the `task_checkbox` rules in `schema.yaml`: more than one
-  non-`[>]` checkbox for a task note (error), none (warning), or one outside
-  the home note (warning). Start lenient, tighten later.
-- Self-test: check that the example frontmatter block in `schema.md` passes
-  `schema.yaml`, so the two cannot drift.
+`tools/lint.py` exists. Possible later: a `--fix` for the safe cases (empty
+optional properties, placeholder leftovers), JSON output, a check for
+unresolved wikilinks, and tightening some warnings (wrong folder, checkbox
+outside the home note) into errors once the vaults are clean.
 
 ## Verified in the playgrounds
 

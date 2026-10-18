@@ -18,7 +18,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 CONF="${KIT_CONF:-$REPO/vaults.conf}"
 # Whitelist of repo paths that are deployed. Anything else stays in the repo.
-DEPLOY="templates bases agents schema.md schema.yaml types.json"
+DEPLOY="templates bases agents schema.md schema.yaml types.json tools/lint.py tools/kitlib.py"
 
 DRY_RUN=0
 FORCE=0
@@ -105,7 +105,7 @@ build_stage() {
     local p present=""
     for p in $DEPLOY; do
         if [ -e "$REPO/$p" ]; then
-            rsync -rlt --exclude .DS_Store "$REPO/$p" "$STAGE/kit/"
+            ( cd "$REPO" && rsync -rltR --exclude .DS_Store "$p" "$STAGE/kit/" )
             present="$present $p"
         fi
     done

@@ -196,6 +196,9 @@ checkboxes.
 
 ## Linting
 
-`schema.yaml` is meant to drive a linter that checks vault notes (known `type`,
-required properties, allowed values, formats, folder and name rules). Not built
-yet.
+`tools/lint.py` checks a vault's notes against `schema.yaml`: known `type`,
+required properties, allowed values, formats, folders, names and the task
+checkbox rules. It is read-only and reports a rule id and a path per finding.
+Errors are structural (missing type or required property, bad value);
+placement, naming and the checkbox rules are warnings. It ships as
+`_kit/tools/lint.py`; run `uv run _kit/tools/lint.py` from the vault.
