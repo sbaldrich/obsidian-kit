@@ -49,10 +49,16 @@ def template_name(type_name: str) -> str:
 def prop_types(schema: dict) -> dict[str, str]:
     """Obsidian type per property name, across all note types."""
     result = {"type": "text"}
-    for spec in schema["types"].values():
-        for name, prop in (spec.get("props") or {}).items():
+    for _, props in prop_groups(schema):
+        for name, prop in props.items():
             result[name] = RESERVED_NAMES.get(name) or OBSIDIAN_TYPES[prop["type"]]
     return result
+
+
+def prop_groups(schema: dict) -> list[tuple[str, dict]]:
+    """(owner, props) for all_types and every note type."""
+    return [("all_types", schema.get("all_types") or {})] + [
+        (tname, spec.get("props") or {}) for tname, spec in schema["types"].items()]
 
 
 def validate_schema(schema: dict) -> list[str]:
@@ -81,6 +87,7 @@ def validate_schema(schema: dict) -> list[str]:
                 re.compile(pattern)
             except re.error:
                 errors.append(f"{tname}: invalid name pattern")
+    for tname, props in prop_groups(schema):
         for name, prop in props.items():
             vtype = prop.get("type")
             if vtype not in OBSIDIAN_TYPES:

@@ -153,7 +153,7 @@ def lint_vault(vault: Path, schema: dict) -> tuple[int, list[Finding]]:
             add("error", "unknown-type", rel, repr(ntype))
             continue
 
-        props = spec.get("props") or {}
+        props = {**(schema.get("all_types") or {}), **(spec.get("props") or {})}
         for name in spec.get("required", []):
             if fm.get(name) in EMPTY:
                 add("error", f"missing-required:{name}", rel)
@@ -242,7 +242,7 @@ def hints(schema: dict) -> dict[str, str]:
                            "contain ': ', '#' or start with '[['.",
         "missing-required": "Fill in the property; the type's template in _kit/templates/ shows its shape.",
         "one-of": "Set exactly one of the alternatives (for tasks and decisions: `project` or `area`).",
-        "unexpected-property": "Remove or rename it, or add it to the type in schema.yaml"
+        "unexpected-property": "Remove or rename it, or add it to its type (or to all_types) in schema.yaml"
                                + (f" (only {', '.join(extra)} notes allow extra properties)." if extra else "."),
         "invalid-value": "Use the schema's format: dates YYYY-MM-DD, links \"[[Note]]\", lists as YAML "
                          "lists, enums one of their values (see the type in schema.yaml).",

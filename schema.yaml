@@ -35,7 +35,8 @@
 #   year      four-digit integer
 #   kebab     lowercase words joined by hyphens
 # Optional properties may be omitted or left empty.
-# Properties not listed for a type are invalid, unless the type sets extra: allow.
+# Properties not listed for a type (or in all_types) are invalid, unless the
+# type sets extra: allow.
 #
 # Templates: property order follows `props`; `sections` are the body headings.
 # A section is a heading, or {heading: [embeds]} where each embed is
@@ -81,6 +82,11 @@ task_checkbox:
 
 # Folder names: lowercase, hyphens.
 folder_name: '^[a-z0-9]+(-[a-z0-9]+)*$'
+
+# Optional properties any type may have. They stay out of the templates; a
+# type that wants one in its template lists it in its own props.
+all_types:
+  aliases: {type: strings}
 
 types:
   project:

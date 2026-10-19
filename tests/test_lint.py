@@ -111,6 +111,18 @@ class TypeAndProperties(Base):
         })
         self.assertEqual(f, {("unexpected-property:tags", "projects/p/Tagged.md")})
 
+    def test_aliases_allowed_on_every_type(self):
+        f = self.findings({
+            "projects/p/A.md": PROJECT.replace("---\n", "---\naliases: [Alpha, The A]\n", 1),
+            "reference/H.md": "---\ntype: hub\naliases:\n---\n",
+            "projects/p/B.md": PROJECT.replace("---\n", "---\naliases: Beta\n", 1),
+            "projects/p/C.md": PROJECT.replace("---\n", "---\nalias: [Gamma]\n", 1),
+        })
+        self.assertEqual(f, {
+            ("invalid-value:aliases", "projects/p/B.md"),      # must be a list
+            ("unexpected-property:alias", "projects/p/C.md"),  # only the plural is Obsidian's
+        })
+
     def test_invalid_values(self):
         f = self.findings({
             "records/impact/2026-01-01 A.md": '---\ntype: impact\ndate: yesterday\ncompetency: Tech Lead\ncycle: 26\n---\n',
