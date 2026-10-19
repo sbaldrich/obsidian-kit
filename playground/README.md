@@ -1,7 +1,7 @@
 # Playground
 
 Synthetic vault for testing kit ideas. Not part of the kit: never deployed.
-All names and data are invented. Its notes follow `schema.md`; community
+All names and data are invented. Its notes follow `schema.yaml`; community
 plugins, if any, are installed locally and not committed.
 
 Question: with task status stored only in the checkbox (task notes have no

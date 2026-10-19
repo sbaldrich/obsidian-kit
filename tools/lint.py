@@ -5,10 +5,7 @@
 # ///
 """Check the notes of a vault against schema.yaml. Read-only: never writes.
 
-    uv run tools/lint.py                  every vault in vaults.conf
-    uv run tools/lint.py work             one vault, by name (from vaults.conf)
-    uv run tools/lint.py ./some/vault     one vault, by path (needs a / or ~)
-    uv run _kit/tools/lint.py             from a vault: lint the vault holding _kit/
+    uv run tools/lint.py <vault-path> [...]
 
 Output is a rule id and a relative path per finding, never note content.
 --verbose adds the offending values on stderr. Exit code: 0 no errors,
@@ -32,15 +29,10 @@ from pathlib import Path, PurePosixPath
 
 import yaml
 
-sys.dont_write_bytecode = True   # never leave a __pycache__ in a vault's _kit/
+sys.dont_write_bytecode = True   # leave no __pycache__ behind
 from kitlib import check_value, matches  # noqa: E402
 
-KIT = Path(__file__).resolve().parent.parent
-
-
-class UsageError(Exception):
-    """Bad arguments or configuration (exit code 2)."""
-
+REPO = Path(__file__).resolve().parent.parent
 
 SKIP_DIRS = {"_kit"}
 FRONTMATTER = re.compile(r"\A---[ \t]*\r?\n(.*?)\r?\n---[ \t]*(?:\r?\n|\Z)", re.S)
@@ -225,49 +217,10 @@ def lint_vault(vault: Path, schema: dict) -> tuple[int, list[Finding]]:
     return len(notes), findings
 
 
-# ---- vault selection ------------------------------------------------------------
-
-def read_conf() -> dict[str, Path]:
-    conf = Path(os.environ.get("KIT_CONF") or KIT / "vaults.conf")
-    if not conf.is_file():
-        raise UsageError(f"no vaults config at {conf}")
-    vaults: dict[str, Path] = {}
-    for n, line in enumerate(conf.read_text().splitlines(), 1):
-        line = line.strip()
-        if not line or line.startswith("#"):
-            continue
-        if "=" not in line:
-            raise UsageError(f"{conf}:{n}: expected name=path")
-        name, path = (s.strip() for s in line.split("=", 1))
-        if not re.fullmatch(r"[A-Za-z0-9_.-]+", name) or not path:
-            raise UsageError(f"{conf}:{n}: invalid entry")
-        p = Path(path).expanduser()
-        vaults[name] = p if p.is_absolute() else conf.parent.resolve() / p
-    return vaults
-
-
-def select(targets: list[str]) -> list[tuple[str, Path]]:
-    if not targets:
-        if KIT.name == "_kit":          # running from a vault's _kit/tools
-            return [(KIT.parent.name, KIT.parent)]
-        return list(read_conf().items())
-    chosen = []
-    conf = None
-    for t in targets:
-        if "/" in t or t.startswith(("~", ".")):
-            chosen.append((Path(t).name or t, Path(t).expanduser()))
-        else:
-            conf = conf if conf is not None else read_conf()
-            if t not in conf:
-                raise UsageError(f"unknown vault '{safe(t)}' (use ./{safe(t)} for a path)")
-            chosen.append((t, conf[t]))
-    return chosen
-
-
 def main() -> int:
     ap = argparse.ArgumentParser(description="Check vault notes against schema.yaml (read-only).")
-    ap.add_argument("targets", nargs="*", help="vault names from vaults.conf, or paths containing a /")
-    ap.add_argument("--schema", type=Path, default=KIT / "schema.yaml")
+    ap.add_argument("vaults", nargs="+", type=Path, help="path of a vault")
+    ap.add_argument("--schema", type=Path, default=REPO / "schema.yaml")
     ap.add_argument("--strict", action="store_true", help="warnings fail the run too")
     ap.add_argument("--verbose", action="store_true", help="also print offending values, on stderr")
     ap.add_argument("-q", "--quiet", action="store_true", help="only print the summaries")
@@ -275,18 +228,15 @@ def main() -> int:
 
     try:
         schema = yaml.safe_load(args.schema.read_text())
-        vaults = select(args.targets)
-    except UsageError as exc:
-        print(f"lint.py: {exc}", file=sys.stderr)
-        return 2
     except (OSError, yaml.YAMLError) as exc:
-        print(f"lint.py: cannot read schema or config ({type(exc).__name__})", file=sys.stderr)
+        print(f"lint.py: cannot read schema ({type(exc).__name__})", file=sys.stderr)
         return 2
 
     failed = False
-    for name, path in vaults:
+    for path in args.vaults:
+        name = str(path)
         resolved = path.resolve() if path.exists() else path
-        if not resolved.is_dir() or resolved in (Path("/"), Path.home()):
+        if not resolved.is_dir() or resolved in (Path("/"), Path.home().resolve()):
             print(f"{safe(name)}: not a usable vault directory", file=sys.stderr)
             failed = True
             continue

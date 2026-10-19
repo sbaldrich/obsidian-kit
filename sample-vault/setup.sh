@@ -22,7 +22,4 @@ mine = json.load(open(sys.argv[2]))["types"] if os.path.exists(sys.argv[2]) else
 json.dump({"types": {**kit, **mine}}, open(sys.argv[2], "w"), indent=2)
 PY
 
-CONF="$(mktemp)"
-trap 'rm -f "$CONF"' EXIT
-echo "sample=$HERE" > "$CONF"
-KIT_CONF="$CONF" "$REPO/install.sh" sample
+"$REPO/install.sh" "$HERE"

@@ -1,5 +1,30 @@
-# Machine-readable schema. Source of truth for types, properties, allowed values,
-# folders and names. schema.md holds the principles and conventions.
+# Schema shared by all vaults: note types, folders, properties, conventions.
+# tools/build.py generates templates/ and types.json from it; tools/lint.py
+# checks vaults against it.
+#
+# Principles
+# - Folders say what a note is; links and properties say what it is about.
+# - Queries are link-based (file.hasLink(this.file)), never folder-based.
+#   Exceptions: bases exclude the kit with !file.inFolder("_kit"), and the
+#   Untyped base looks into inbox/.
+# - Every note has a `type`, except in inbox/ (unprocessed captures) and _kit/.
+# - No `tags` property; type and links do that job.
+# - A property name has one meaning and one value type across all types
+#   (Obsidian types properties per name, vault-wide). A list and a single
+#   value get different names: project vs projects.
+# - Core Obsidian only: Templates, Daily notes, Bases, Backlinks.
+# - Bases are embedded by name (![[Daily.base]]), which resolves vault-wide,
+#   so kit base names must be unique in the vault.
+#
+# Conventions
+# - Folder names lowercase with hyphens; note titles keep normal casing.
+# - Dated notes: "YYYY-MM-DD Title". A recurring meeting series is one note
+#   per year, "YYYY Title", with `date` set to its first meeting. People: full
+#   name. Reference notes: a specific concept name.
+# - Dates YYYY-MM-DD; links are quoted wikilinks ("[[Note]]"); lists are YAML
+#   lists. Enums allow only their listed values.
+# - Not every folder exists in every vault. _kit/ is the deployed kit: never
+#   edit it in a vault.
 #
 # Property value types:
 #   date      YYYY-MM-DD
@@ -12,17 +37,18 @@
 # Optional properties may be omitted or left empty.
 # Properties not listed for a type are invalid, unless the type sets extra: allow.
 #
-# tools/build.py generates templates/ and types.json from this file. Template
-# property order follows `props`; `sections` are the body headings. A section
-# is a heading, or {heading: [embeds]} where each embed is `Base.base` or
-# `Base.base#View` (the base and view must exist in bases/). Defaults
-# apply to required properties only: `date` and `start` are today, `cycle` is
-# the current year, enums start with their first value. Everything else is empty.
+# Templates: property order follows `props`; `sections` are the body headings.
+# A section is a heading, or {heading: [embeds]} where each embed is
+# `Base.base` or `Base.base#View` (the base and view must exist in bases/).
+# Defaults apply to required properties only: `date` and `start` are today,
+# `cycle` is the current year, enums start with their first value. Everything
+# else is empty.
 # An empty property counts as absent (so one_of is satisfied by filling one).
 
 version: 1
 
-# Notes in these folders keep their type but skip the folder check.
+# Notes in these folders keep their type but skip the folder check:
+# closed projects go to archive/, area history to areas/<name>/archive/<year>/.
 folder_exempt:
   - archive/**
   - areas/*/archive/**
@@ -39,8 +65,13 @@ checkboxes:
   "x": done
   ">": moved
 
-# A task's checkbox is a checkbox line that links to the task note. The home
-# note is the note the task's `project` or `area` property links to.
+# A task's status is its checkbox: a checkbox line that links to the task
+# note. Task notes have no `status` property, so status is stored once.
+# A task note has exactly one checkbox, in its home note (the note its
+# `project` or `area` property links to). Elsewhere only [>] (moved) is
+# allowed, e.g. in a daily note carrying the task forward; a [>] line is never
+# the task's status. Bases can't read checkboxes: see the status in the home
+# note or the task note's Backlinks pane.
 task_checkbox:
   repeatable: [">"]
   rules:
@@ -53,6 +84,7 @@ folder_name: '^[a-z0-9]+(-[a-z0-9]+)*$'
 
 types:
   project:
+    # Home note of a project (a goal with an end).
     folder: [projects/*]
     sections: [Goal, Tasks, {Notes: ["Linked notes.base#Tasks", "Linked notes.base#Meetings", "Linked notes.base#Decisions"]}]
     required: [status, start]
@@ -64,6 +96,7 @@ types:
       target: {type: date}
 
   task:
+    # A task big enough to need its own note.
     folder: [projects/*, areas/*]
     sections: [Context, Steps]
     one_of: [project, area]
@@ -72,6 +105,7 @@ types:
       area: {type: link}
 
   area:
+    # Home note of an ongoing responsibility.
     folder: [areas/*]
     sections: [Scope, Tasks, {Notes: ["Linked notes.base#By type"]}]
     required: [status]
@@ -79,9 +113,9 @@ types:
       status: {type: enum, values: [active, closed]}
 
   meeting:
+    # One meeting, or one recurring series per year.
     folder: [meetings]
     sections: [Notes, Actions]
-    # A single meeting is dated; a recurring series is one note per year.
     name: ['^\d{4}-\d{2}-\d{2} .+', '^\d{4} .+']
     required: [date, attendees]
     optional: [projects, area]
@@ -92,6 +126,7 @@ types:
       attendees: {type: links}
 
   incident:
+    # An event within an area (e.g. an on-call incident).
     folder: [areas/*]
     sections: [Summary, Timeline, Follow-ups]
     name: ['^\d{4}-\d{2}-\d{2} .+']
@@ -101,6 +136,7 @@ types:
       area: {type: link}
 
   person:
+    # Hub note for a person.
     folder: [people]
     sections: [{Notes: ["Linked notes.base#Timeline"]}]
     required: [context]
@@ -110,6 +146,7 @@ types:
       context: {type: string}
 
   impact:
+    # Something I did that mattered.
     folder: [records/impact]
     sections: [What I did, Result]
     name: ['^\d{4}-\d{2}-\d{2} .+']
@@ -122,6 +159,7 @@ types:
       cycle: {type: year}
 
   decision:
+    # A decision worth remembering or justifying later.
     folder: [records/decisions]
     sections: [Context, Options, Decision, Consequences]
     name: ['^\d{4}-\d{2}-\d{2} .+']
@@ -133,6 +171,7 @@ types:
       area: {type: link}
 
   1on1:
+    # One 1:1 conversation.
     folder: [records/1on1]
     sections: [Topics, Notes, Actions]
     name: ['^\d{4}-\d{2}-\d{2} .+']
@@ -142,6 +181,7 @@ types:
       person: {type: link}
 
   feedback:
+    # One piece of feedback, about someone or received.
     folder: [records/feedback]
     sections: [Feedback, Context]
     name: ['^\d{4}-\d{2}-\d{2} .+']
@@ -154,6 +194,7 @@ types:
       status: {type: enum, values: [open, delivered]}
 
   cycle:
+    # Home note for one performance review cycle.
     folder: [areas/career]
     sections: [Goals, Self review, Outcome, {Impact: ["Impact.base#This cycle"]}, {Feedback: ["Feedback.base#This cycle"]}]
     required: [cycle]
@@ -161,6 +202,7 @@ types:
       cycle: {type: year}
 
   story:
+    # A reusable career story (for interviews, reviews).
     folder: [areas/career]
     sections: [Situation, Task, Action, Result]
     required: [competency, role]
@@ -169,6 +211,7 @@ types:
       role: {type: string}
 
   reference:
+    # Durable knowledge, in my own words.
     folder: [reference, reference/*]
     sections: []
     required: [topics]
@@ -176,10 +219,12 @@ types:
       topics: {type: links}
 
   hub:
+    # Entry point for a topic; reference notes link to it.
     folder: [reference, reference/*]
     sections: [{Notes: ["Linked notes.base#Reference"]}]
 
   source:
+    # My notes on a book, article, paper, course or talk.
     folder: [sources]
     sections: [Summary, Takeaways]
     required: [kind, author, status]
@@ -193,6 +238,7 @@ types:
       finished: {type: date}
 
   option:
+    # A candidate being compared (house, hotel, employer).
     folder: [projects/*]
     sections: [Pros, Cons, Notes]
     required: [status]
@@ -202,6 +248,7 @@ types:
       status: {type: enum, values: [considering, visited, rejected, chosen]}
 
   daily:
+    # Daily note: capture (work) or journal (personal).
     folder: [daily]
     sections: [{On this day: ["Daily.base"]}]
     name: ['^\d{4}-\d{2}-\d{2}$']

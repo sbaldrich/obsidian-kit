@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
 # Deploy the kit into Obsidian vaults, under <vault>/_kit/ and nowhere else.
 #
-#   ./install.sh [--dry-run] [--force] [vault ...]
-#
-# Vaults come from vaults.conf (name=path per line, see vaults.conf.example).
-# With no names, every configured vault is installed.
+#   ./install.sh [--dry-run] [--force] <vault-path> [...]
 #
 #   -n, --dry-run   show what would change; write nothing
 #   -f, --force     overwrite _kit/ even if it was edited in the vault
@@ -16,9 +13,8 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
-CONF="${KIT_CONF:-$REPO/vaults.conf}"
 # Whitelist of repo paths that are deployed. Anything else stays in the repo.
-DEPLOY="templates bases agents schema.md schema.yaml types.json tools/lint.py tools/kitlib.py"
+DEPLOY="templates bases schema.yaml types.json"
 
 DRY_RUN=0
 FORCE=0
@@ -28,7 +24,7 @@ die() { echo "install.sh: $*" >&2; exit 2; }
 err() { echo "install.sh: $*" >&2; }
 say() { echo "$*"; }
 
-usage() { sed -n '2,15p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,11p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 
 if command -v sha256sum >/dev/null 2>&1; then
     SUM="sha256sum"
@@ -39,49 +35,8 @@ else
 fi
 command -v rsync >/dev/null 2>&1 || die "need rsync"
 
-trim() {
-    local s="$1"
-    s="${s#"${s%%[![:space:]]*}"}"
-    s="${s%"${s##*[![:space:]]}"}"
-    printf '%s' "$s"
-}
-
 cleanup() { [ -z "$STAGE" ] || rm -rf "$STAGE"; }
 trap cleanup EXIT
-
-# ---- vaults.conf ------------------------------------------------------------
-
-NAMES=()
-DIRS=()
-
-read_conf() {
-    [ -f "$CONF" ] || die "no vaults config at $CONF (copy vaults.conf.example)"
-    local confdir line name path lineno=0 i
-    confdir="$(cd "$(dirname "$CONF")" && pwd -P)"
-    while IFS= read -r line || [ -n "$line" ]; do
-        lineno=$((lineno + 1))
-        line="$(trim "$line")"
-        case "$line" in ''|'#'*) continue ;; esac
-        case "$line" in *=*) ;; *) die "$CONF:$lineno: expected name=path" ;; esac
-        name="$(trim "${line%%=*}")"
-        path="$(trim "${line#*=}")"
-        [[ "$name" =~ ^[A-Za-z0-9_.-]+$ ]] || die "$CONF:$lineno: invalid vault name"
-        [ -n "$path" ] || die "$CONF:$lineno: empty path"
-        i=0
-        while [ "$i" -lt "${#NAMES[@]}" ]; do
-            [ "${NAMES[$i]}" != "$name" ] || die "$CONF:$lineno: duplicate vault name '$name'"
-            i=$((i + 1))
-        done
-        case "$path" in
-            "~") path="$HOME" ;;
-            "~/"*) path="$HOME/${path#"~/"}" ;;
-        esac
-        case "$path" in /*) ;; *) path="$confdir/$path" ;; esac
-        NAMES+=("$name")
-        DIRS+=("$path")
-    done < "$CONF"
-    [ "${#NAMES[@]}" -gt 0 ] || die "$CONF lists no vaults"
-}
 
 # ---- staging area (outside any vault) --------------------------------------
 
@@ -173,19 +128,19 @@ confirm() {
 
 # ---- install one vault ------------------------------------------------------
 
-install_one() { # name dir
-    local name="$1" dir="$2" vault target w="$STAGE/work" changed
+install_one() { # path
+    local dir="$1" vault target w="$STAGE/work" changed
 
-    if [ ! -d "$dir" ]; then err "$name: not a directory: $dir"; return 1; fi
-    if ! vault="$(cd "$dir" && pwd -P)"; then err "$name: cannot enter $dir"; return 1; fi
-    if [ "$vault" = "/" ] || [ "$vault" = "$HOME" ]; then err "$name: refusing $vault"; return 1; fi
-    if [ ! -d "$vault/.obsidian" ]; then err "$name: no .obsidian/ in $vault, not an Obsidian vault"; return 1; fi
+    if [ ! -d "$dir" ]; then err "$dir: not a directory"; return 1; fi
+    if ! vault="$(cd "$dir" && pwd -P)"; then err "$dir: cannot enter"; return 1; fi
+    if [ "$vault" = "/" ] || [ "$vault" = "$HOME" ]; then err "refusing $vault"; return 1; fi
+    if [ ! -d "$vault/.obsidian" ]; then err "$vault: no .obsidian/, not an Obsidian vault"; return 1; fi
     target="$vault/_kit"
-    if [ -L "$target" ]; then err "$name: _kit is a symlink, refusing"; return 1; fi
-    if [ -e "$target" ] && [ ! -d "$target" ]; then err "$name: _kit exists and is not a directory"; return 1; fi
-    [ "$target" = "$vault/_kit" ] || { err "$name: internal error, unexpected target"; return 1; }
+    if [ -L "$target" ]; then err "$vault: _kit is a symlink, refusing"; return 1; fi
+    if [ -e "$target" ] && [ ! -d "$target" ]; then err "$vault: _kit exists and is not a directory"; return 1; fi
+    [ "$target" = "$vault/_kit" ] || { err "$vault: internal error, unexpected target"; return 1; }
 
-    say "$name: $vault/_kit"
+    say "$vault/_kit"
     detect_changes "$target"
     changed=$(( $(count_lines "$w/modified") + $(count_lines "$w/deleted") + $(count_lines "$w/added") ))
 
@@ -214,16 +169,16 @@ install_one() { # name dir
 
     if [ "$needs_ok" = 1 ] && [ "$FORCE" = 0 ]; then
         if interactive; then
-            confirm "  Overwrite these changes in $target?" || { err "$name: left untouched"; return 1; }
+            confirm "  Overwrite these changes in $target?" || { err "$vault: left untouched"; return 1; }
         else
-            err "$name: _kit/ was edited; refusing (run interactively, or use --force)"
+            err "$vault: _kit/ was edited; refusing (run interactively, or use --force)"
             return 1
         fi
     fi
 
-    mkdir -p "$target" || { err "$name: cannot create $target"; return 1; }
+    mkdir -p "$target" || { err "$vault: cannot create $target"; return 1; }
     if ! rsync -rlt --delete "$STAGE/kit/" "$target/"; then
-        err "$name: rsync failed"
+        err "$vault: rsync failed"
         return 1
     fi
     say "  installed ${KIT_COMMIT:0:9} (uncommitted changes: $KIT_DIRTY)"
@@ -231,41 +186,23 @@ install_one() { # name dir
 
 # ---- main -------------------------------------------------------------------
 
-WANTED=()
+VAULTS=()
 while [ $# -gt 0 ]; do
     case "$1" in
         -n|--dry-run) DRY_RUN=1 ;;
         -f|--force) FORCE=1 ;;
         -h|--help) usage; exit 0 ;;
         -*) die "unknown option: $1" ;;
-        *) WANTED+=("$1") ;;
+        *) VAULTS+=("$1") ;;
     esac
     shift
 done
-
-read_conf
-
-SELECTED=()
-if [ "${#WANTED[@]}" -eq 0 ]; then
-    i=0
-    while [ "$i" -lt "${#NAMES[@]}" ]; do SELECTED+=("$i"); i=$((i + 1)); done
-else
-    for w in "${WANTED[@]}"; do
-        found=""
-        i=0
-        while [ "$i" -lt "${#NAMES[@]}" ]; do
-            if [ "${NAMES[$i]}" = "$w" ]; then found="$i"; fi
-            i=$((i + 1))
-        done
-        [ -n "$found" ] || die "unknown vault '$w' (not in $CONF)"
-        SELECTED+=("$found")
-    done
-fi
+[ "${#VAULTS[@]}" -gt 0 ] || { usage >&2; exit 2; }
 
 build_stage
 
 failed=0
-for i in "${SELECTED[@]}"; do
-    if ! install_one "${NAMES[$i]}" "${DIRS[$i]}"; then failed=1; fi
+for v in "${VAULTS[@]}"; do
+    if ! install_one "$v"; then failed=1; fi
 done
 exit "$failed"

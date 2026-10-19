@@ -10,10 +10,9 @@
 
 Validation covers schema.yaml itself (every property declared once, one value
 type per property name), the base embeds in `sections` (the base and view must
-exist in bases/), the base links in the hand-written templates/*checklist.md,
-and the example frontmatter in schema.md. Generated templates are named
-"<Type> template.md"; the checklists are left alone. Only files inside the
-repo are read or written.
+exist in bases/) and the base links in the hand-written templates/*checklist.md.
+Generated templates are named "<Type> template.md"; the checklists are left
+alone. Only files inside the repo are read or written.
 """
 import argparse
 import json
@@ -24,7 +23,7 @@ import tempfile
 from pathlib import Path
 
 import yaml
-from kitlib import check_value, load_schema
+from kitlib import load_schema
 
 # Schema value type -> Obsidian property type (as stored in types.json).
 OBSIDIAN_TYPES = {
@@ -195,43 +194,6 @@ def outputs(root: Path, schema: dict) -> dict[Path, str]:
     return result
 
 
-def validate_examples(root: Path, schema: dict) -> list[str]:
-    """The example frontmatter blocks in schema.md must satisfy schema.yaml."""
-    text = (root / "schema.md").read_text()
-    match = re.search(r"## Properties.*?```yaml\n(.*?)```", text, re.S)
-    if not match:
-        return ["schema.md: no yaml example block under '## Properties'"]
-    chunks = [c for c in re.split(r"^# [^\n]*\n(?=type:)", match.group(1), flags=re.M) if c.strip()]
-    errors, seen = [], set()
-    for chunk in chunks:
-        fm = yaml.safe_load(chunk)
-        tname = fm.get("type")
-        seen.add(tname)
-        spec = schema["types"].get(tname)
-        if spec is None:
-            errors.append(f"schema.md example: unknown type {tname}")
-            continue
-        props = spec.get("props") or {}
-        for name in spec.get("required", []):
-            if fm.get(name) in (None, [], ""):
-                errors.append(f"schema.md example {tname}: required {name} missing or empty")
-        if spec.get("one_of"):
-            present = [k for k in spec["one_of"] if fm.get(k) is not None]
-            if len(present) != 1:
-                errors.append(f"schema.md example {tname}: expected exactly one of {spec['one_of']}")
-        for name, value in fm.items():
-            if name == "type":
-                continue
-            if name not in props:
-                if spec.get("extra") != "allow":
-                    errors.append(f"schema.md example {tname}: unexpected property {name}")
-            elif value is not None and not check_value(props[name]["type"], props[name], value):
-                errors.append(f"schema.md example {tname}.{name}: invalid value")
-    for missing in sorted(set(schema["types"]) - seen):
-        errors.append(f"schema.md: no example for type {missing}")
-    return errors
-
-
 def write_atomic(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=".build-")
@@ -260,7 +222,6 @@ def main() -> int:
     if not errors:
         errors += validate_embeds(root, schema)
         errors += validate_checklists(root)
-        errors += validate_examples(root, schema)
     if errors:
         print("\n".join(errors), file=sys.stderr)
         return 1

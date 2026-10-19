@@ -60,9 +60,9 @@ class Base(unittest.TestCase):
         _, found = lint.lint_vault(self.vault, SCHEMA)
         return {f.rule: f.severity for f in found}
 
-    def cli(self, *args, env=None):
-        e = {**os.environ, **(env or {})}
-        r = subprocess.run([sys.executable, str(LINT), *args], capture_output=True, text=True, env=e)
+    def cli(self, *args):
+        env = {**os.environ, "HOME": str(self.tmp)}   # nothing real under HOME is reachable
+        r = subprocess.run([sys.executable, str(LINT), *args], capture_output=True, text=True, env=env)
         return r.returncode, r.stdout, r.stderr
 
 
@@ -215,65 +215,58 @@ class Safety(Base):
 
     def test_values_stay_out_of_output_unless_verbose(self):
         make(self.vault, {"projects/p/P.md": "---\ntype: project\nstatus: SECRET-VALUE-123\nstart: 2026-01-01\n---\n"})
-        rc, out, err = self.cli(str(self.vault) + "/")
+        rc, out, err = self.cli(str(self.vault))
         self.assertEqual(rc, 1)
         self.assertNotIn("SECRET-VALUE-123", out + err)
-        rc, out, err = self.cli("--verbose", str(self.vault) + "/")
+        rc, out, err = self.cli("--verbose", str(self.vault))
         self.assertNotIn("SECRET-VALUE-123", out)
         self.assertIn("SECRET-VALUE-123", err)
 
     def test_control_characters_in_names_are_escaped(self):
         make(self.vault, {"bad\x1b[31mname.md": "no type"})
-        rc, out, err = self.cli(str(self.vault) + "/")
+        rc, out, err = self.cli(str(self.vault))
         self.assertNotIn("\x1b", out + err)
         self.assertIn("\\x1b", out)
 
     def test_lint_never_writes(self):
         make(self.vault, {"a.md": "x", "projects/p/P.md": PROJECT, "projects/p/Job.md": TASK, ".obsidian/app.json": "{}"})
         before = fingerprint(self.vault)
-        self.cli(str(self.vault) + "/")
-        self.cli("--strict", "--verbose", str(self.vault) + "/")
+        self.cli(str(self.vault))
+        self.cli("--strict", "--verbose", str(self.vault))
         self.assertEqual(fingerprint(self.vault), before)
 
 
 class Cli(Base):
     def test_exit_codes(self):
         make(self.vault, {"reference/Hub.md": "---\ntype: hub\n---\n"})
-        self.assertEqual(self.cli(str(self.vault) + "/")[0], 0)
+        self.assertEqual(self.cli(str(self.vault))[0], 0)
         make(self.vault, {"stray.md": "no type"})
-        self.assertEqual(self.cli(str(self.vault) + "/")[0], 1)
+        self.assertEqual(self.cli(str(self.vault))[0], 1)
 
     def test_warnings_pass_unless_strict(self):
         make(self.vault, {"notes/Hub.md": "---\ntype: hub\n---\n"})   # wrong-folder: warning only
-        self.assertEqual(self.cli(str(self.vault) + "/")[0], 0)
-        self.assertEqual(self.cli("--strict", str(self.vault) + "/")[0], 1)
+        self.assertEqual(self.cli(str(self.vault))[0], 0)
+        self.assertEqual(self.cli("--strict", str(self.vault))[0], 1)
 
-    def test_vault_names_come_from_the_config(self):
+    def test_needs_a_vault_path(self):
+        self.assertEqual(self.cli()[0], 2)
+
+    def test_several_vaults_one_summary_each(self):
         make(self.vault, {"reference/Hub.md": "---\ntype: hub\n---\n"})
-        conf = self.tmp / "vaults.conf"
-        conf.write_text(f"# comment\n\nmine = {self.vault}\n")
-        rc, out, _ = self.cli("mine", env={"KIT_CONF": str(conf)})
-        self.assertEqual(rc, 0)
-        self.assertIn("mine: 1 notes, 0 errors, 0 warnings", out)
-        rc, _, err = self.cli("nope", env={"KIT_CONF": str(conf)})
-        self.assertEqual(rc, 2)
-        rc, _, err = self.cli("mine", env={"KIT_CONF": str(self.tmp / "missing.conf")})
-        self.assertEqual(rc, 2)
+        other = make(self.tmp / "other", {"stray.md": "no type"})
+        rc, out, _ = self.cli(str(self.vault), str(other))
+        self.assertEqual(rc, 1)
+        self.assertIn(f"{self.vault}: 1 notes, 0 errors, 0 warnings", out)
+        self.assertIn(f"{other}: 1 notes, 1 error, 0 warnings", out)
+
+    def test_refuses_home(self):
+        # HOME is redirected to self.tmp, so this also proves the redirect works.
+        rc, _, err = self.cli(str(self.tmp))
+        self.assertEqual(rc, 1)
+        self.assertIn("not a usable vault directory", err)
 
     def test_not_a_directory(self):
-        self.assertEqual(self.cli(str(self.tmp / "nope") + "/")[0], 1)
-
-    def test_runs_from_a_vaults_kit_folder_without_arguments(self):
-        make(self.vault, {"reference/Hub.md": "---\ntype: hub\n---\n"})
-        kit = self.vault / "_kit"
-        (kit / "tools").mkdir(parents=True)
-        for name in ("lint.py", "kitlib.py"):
-            shutil.copy(REPO / "tools" / name, kit / "tools" / name)
-        shutil.copy(REPO / "schema.yaml", kit / "schema.yaml")
-        r = subprocess.run([sys.executable, str(kit / "tools" / "lint.py")], capture_output=True, text=True)
-        self.assertEqual(r.returncode, 0, r.stderr)
-        self.assertIn("vault: 1 notes, 0 errors, 0 warnings", r.stdout)
-        self.assertEqual(list(kit.rglob("__pycache__")), [], "linting must not write into _kit/")
+        self.assertEqual(self.cli(str(self.tmp / "nope"))[0], 1)
 
 
 if __name__ == "__main__":
