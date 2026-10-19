@@ -10,7 +10,8 @@
 Findings are grouped by rule, most frequent first, each with a hint on how to
 fix it and up to 5 example paths. --rule lists every path for one rule
 (`--rule missing-required` matches every property), --all prints one line per
-finding. --ignore <folder> hides findings for the notes under a folder;
+finding, --quickfix prints `path:line: severity rule` for an editor's
+quickfix list (the summary goes to stderr). --ignore <folder> hides findings for the notes under a folder;
 --under <folder> shows only those (both repeatable, relative to the vault,
 `*` and `**` allowed). Hidden notes are still read, so a duplicate name or a
 checkbox involving them still counts elsewhere.
@@ -47,6 +48,7 @@ FENCE = re.compile(r"^\s*(```|~~~)")
 CHECKBOX = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+\[(.)\](?:\s|$)")
 WIKILINK = re.compile(r"(?<!!)\[\[([^\[\]]+)\]\]")
 PROP_LINK = re.compile(r"^\[\[([^\]|#]+)")
+KEY = re.compile(r"""^['"]?([^\s#'"][^:'"]*?)['"]?\s*:(?:\s|$)""")
 EMPTY = (None, "", [])
 
 
@@ -56,6 +58,7 @@ class Finding:
     rule: str              # rule id, may carry a property name: "missing-required:status"
     path: str              # path relative to the vault
     detail: str = ""       # shown only with --verbose
+    line: int = 1          # line of the offending property or checkbox, for --quickfix
 
 
 def safe(text: str) -> str:
@@ -101,10 +104,23 @@ def parse_note(vault: Path, rel: str) -> tuple[str, dict | None, str | None]:
     return text, data, None
 
 
-def checkboxes(text: str) -> list[tuple[str, list[str]]]:
-    """[(status char, [link stems])] for checkbox lines outside fenced code."""
+def key_lines(text: str) -> dict[str, int]:
+    """Line number of each top-level frontmatter key."""
+    m = FRONTMATTER.match(text)
+    if not m:
+        return {}
+    result = {}
+    for n, line in enumerate(m.group(1).splitlines(), 2):    # line 1 is the opening ---
+        k = KEY.match(line)
+        if k:
+            result.setdefault(k.group(1), n)
+    return result
+
+
+def checkboxes(text: str) -> list[tuple[str, list[str], int]]:
+    """[(status char, [link stems], line number)] for checkbox lines outside fenced code."""
     result, fenced = [], False
-    for line in text.splitlines():
+    for n, line in enumerate(text.splitlines(), 1):
         if FENCE.match(line):
             fenced = not fenced
             continue
@@ -112,7 +128,7 @@ def checkboxes(text: str) -> list[tuple[str, list[str]]]:
             continue
         m = CHECKBOX.match(line)
         if m:
-            result.append((m.group(1), [link_stem(t) for t in WIKILINK.findall(line)]))
+            result.append((m.group(1), [link_stem(t) for t in WIKILINK.findall(line)], n))
     return result
 
 
@@ -122,7 +138,7 @@ def lint_vault(vault: Path, schema: dict) -> tuple[int, list[Finding]]:
     repeatable = set(schema.get("task_checkbox", {}).get("repeatable", []))
     task_rules = {r["id"]: r["severity"] for r in schema.get("task_checkbox", {}).get("rules", [])}
     findings: list[Finding] = []
-    add = lambda sev, rule, path, detail="": findings.append(Finding(sev, rule, path, detail))
+    add = lambda sev, rule, path, detail="", line=1: findings.append(Finding(sev, rule, path, detail, line))
 
     notes = find_notes(vault)
     parsed: dict[str, tuple[str, dict]] = {}
@@ -145,22 +161,24 @@ def lint_vault(vault: Path, schema: dict) -> tuple[int, list[Finding]]:
             add("error", "bad-frontmatter", rel, err)
             continue
         parsed[rel] = (text, fm)
+        at = key_lines(text)
+        line_of = lambda name: at.get(str(name), 1)
 
         ntype = fm.get("type")
         probe = (folder + "/x") if folder != "." else "x"
         if ntype in EMPTY:
             if not matches(schema["untyped"], probe):
-                add("error", "missing-type", rel)
+                add("error", "missing-type", rel, line=line_of("type"))
             continue
         spec = types.get(ntype) if isinstance(ntype, str) else None
         if spec is None:
-            add("error", "unknown-type", rel, repr(ntype))
+            add("error", "unknown-type", rel, repr(ntype), line_of("type"))
             continue
 
         props = {**(schema.get("all_types") or {}), **(spec.get("props") or {})}
         for name in spec.get("required", []):
             if fm.get(name) in EMPTY:
-                add("error", f"missing-required:{name}", rel)
+                add("error", f"missing-required:{name}", rel, line=line_of(name))
         if spec.get("one_of"):
             present = [k for k in spec["one_of"] if fm.get(k) not in EMPTY]
             if len(present) != 1:
@@ -170,9 +188,9 @@ def lint_vault(vault: Path, schema: dict) -> tuple[int, list[Finding]]:
                 continue
             if name not in props:
                 if spec.get("extra") != "allow":
-                    add("error", f"unexpected-property:{name}", rel)
+                    add("error", f"unexpected-property:{name}", rel, line=line_of(name))
             elif value not in EMPTY and not check_value(props[name]["type"], props[name], value):
-                add("error", f"invalid-value:{name}", rel, f"{props[name]['type']}: {value!r}")
+                add("error", f"invalid-value:{name}", rel, f"{props[name]['type']}: {value!r}", line_of(name))
 
         if not matches(schema["folder_exempt"], probe) and not any(
                 matches([f], folder) for f in spec["folder"]):
@@ -192,16 +210,16 @@ def lint_vault(vault: Path, schema: dict) -> tuple[int, list[Finding]]:
     # ---- checkboxes ---------------------------------------------------------
     boxes: dict[str, list[str]] = {}     # task stem -> notes holding a non-repeatable checkbox
     for rel, (text, fm) in parsed.items():
-        unknown = set()
-        for char, targets in checkboxes(text):
+        unknown: dict[str, int] = {}     # char -> first line
+        for char, targets, n in checkboxes(text):
             if char.lower() not in states:
-                unknown.add(char)
+                unknown.setdefault(char, n)
             if char in repeatable:
                 continue
             for stem in targets:
                 boxes.setdefault(stem, []).append(rel)
         for char in sorted(unknown):
-            add("warning", "unknown-checkbox", rel, f"[{char}]")
+            add("warning", "unknown-checkbox", rel, f"[{char}]", unknown[char])
 
     for rel, (text, fm) in parsed.items():
         if fm.get("type") != "task":
@@ -324,10 +342,13 @@ def main() -> int:
     ap.add_argument("--schema", type=Path, default=REPO / "schema.yaml")
     ap.add_argument("--strict", action="store_true", help="warnings fail the run too")
     ap.add_argument("--verbose", action="store_true", help="also print offending values, on stderr")
-    ap.add_argument("-q", "--quiet", action="store_true", help="only print the summaries")
+    mode = ap.add_mutually_exclusive_group()
+    mode.add_argument("-q", "--quiet", action="store_true", help="only print the summaries")
     ap.add_argument("--rule", action="append", default=[],
                     help="list every finding of this rule or rule family (repeatable)")
-    ap.add_argument("--all", action="store_true", help="one line per finding, ungrouped")
+    mode.add_argument("--all", action="store_true", help="one line per finding, ungrouped")
+    mode.add_argument("--quickfix", action="store_true",
+                      help="path:line: severity rule per finding, for an editor; summary on stderr")
     ap.add_argument("--ignore", action="append", default=[], metavar="FOLDER",
                     help="hide findings under this vault folder (repeatable)")
     ap.add_argument("--under", action="append", default=[], metavar="FOLDER",
@@ -375,10 +396,15 @@ def main() -> int:
         warnings = len(findings) - errors
         plural = lambda n, word: f"{n} {word}" + ("" if n == 1 else "s")
         notes_text = plural(count - hidden, "note") + (f" ({hidden} hidden)" if skip or only else "")
-        print(f"{safe(name)}: {notes_text}, {plural(errors, 'error')}, {plural(warnings, 'warning')}")
+        print(f"{safe(name)}: {notes_text}, {plural(errors, 'error')}, {plural(warnings, 'warning')}",
+              file=sys.stderr if args.quickfix else sys.stdout)
         shown = [f for f in findings if not args.rule or f.rule in args.rule or family(f.rule) in args.rule]
         if args.quiet:
             pass
+        elif args.quickfix:
+            for f in shown:
+                print(f"{safe(os.path.join(name, f.path))}:{f.line}: {f.severity} {safe(f.rule)}")
+                print_detail(f, args.verbose)
         elif args.all:
             for f in shown:
                 print(f"  {f.severity:<7} {safe(f.rule):<30} {safe(f.path)}")

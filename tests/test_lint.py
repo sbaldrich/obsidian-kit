@@ -426,5 +426,58 @@ class Ignore(Base):
         self.assertEqual(self.cli("--under", "../x", str(self.vault))[0], 2)
 
 
+
+class Quickfix(Base):
+    def setUp(self):
+        super().setUp()
+        make(self.vault, {
+            "people/P.md": "---\ntype: person\ncontext: x\nrelation: friend\naliases: Solo\n---\nbody\n",
+            "people/Q.md": "---\ncontext: x\ntype: [[Areas]]\n---\n",
+            "people/R.md": "---\ncontext: x\ntype:\n---\n",
+            "people/S.md": "---\ntype: person\ncontext:\n---\n",
+            "people/T.md": "---\ntype: person\ncontext: x\n---\n- [ ] fine\n- [?] odd\n- [?] again\n",
+            "people/U.md": "no type",
+        })
+
+    def qf(self, *args):
+        rc, out, err = self.cli("--quickfix", *args, str(self.vault))
+        return rc, out.splitlines(), err
+
+    def test_one_line_per_finding_with_the_offending_line(self):
+        rc, lines, err = self.qf()
+        v = str(self.vault)
+        self.assertEqual(set(lines), {
+            f"{v}/people/P.md:4: error unexpected-property:relation",
+            f"{v}/people/P.md:5: error invalid-value:aliases",
+            f"{v}/people/Q.md:3: error unknown-type",
+            f"{v}/people/R.md:3: error missing-type",
+            f"{v}/people/S.md:3: error missing-required:context",
+            f"{v}/people/T.md:6: warning unknown-checkbox",
+            f"{v}/people/U.md:1: error missing-type",
+        })
+        self.assertEqual(rc, 1)
+        self.assertIn("6 errors, 1 warning", err)   # summary on stderr
+
+    def test_respects_rule_and_folder_filters(self):
+        _, lines, _ = self.qf("--rule", "missing-type")
+        self.assertEqual(len(lines), 2)
+        _, lines, _ = self.qf("--ignore", "people")
+        self.assertEqual(lines, [])
+
+    def test_paths_follow_the_vault_argument(self):
+        r = subprocess.run([sys.executable, str(LINT), "--quickfix", "--rule", "unknown-type", "."],
+                           capture_output=True, text=True, cwd=self.vault, env={**os.environ, "HOME": str(self.tmp)})
+        self.assertEqual(r.stdout, "./people/Q.md:3: error unknown-type\n")
+
+    def test_values_stay_out(self):
+        _, lines, err = self.qf("--verbose")
+        self.assertFalse(any("Solo" in l or "Areas" in l for l in lines))
+        self.assertIn("Solo", err)            # --verbose details go to stderr only
+
+    def test_excludes_other_output_modes(self):
+        self.assertEqual(self.cli("--quickfix", "--all", str(self.vault))[0], 2)
+        self.assertEqual(self.cli("--quickfix", "-q", str(self.vault))[0], 2)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

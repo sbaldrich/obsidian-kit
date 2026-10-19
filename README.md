@@ -77,6 +77,11 @@ Needs bash, rsync, git and uv. Tested on macOS only.
   count for duplicate names and task checkboxes.
   `--verbose` adds the offending values on stderr; `--strict` makes warnings
   fail too.
+- **Fix in an editor:** `--quickfix` prints `path:line: severity rule`, with
+  the line of the offending property or checkbox, and the summary on stderr.
+  In Neovim: `uv run tools/lint.py --quickfix --rule unknown-type ~/vaults/work | nvim -q -`,
+  then `:cdo s/.../.../ | update` edits exactly those lines. (Not
+  `nvim -q <(...)`: Neovim 0.11's UI can't read that file, E47.)
 - **Tasks:** a task note has one checkbox, in its home note. See
   `task_checkbox` in `schema.yaml` for the full rule.
 
