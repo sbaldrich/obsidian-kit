@@ -7,9 +7,12 @@
 
     uv run tools/lint.py <vault-path> [...]
 
-Output is a rule id and a relative path per finding, never note content.
---verbose adds the offending values on stderr. Exit code: 0 no errors,
-1 errors (or warnings with --strict), 2 usage problem.
+Findings are grouped by rule, most frequent first, each with a hint on how to
+fix it and up to 5 example paths. --rule lists every path for one rule
+(`--rule missing-required` matches every property), --all prints one line per
+finding. Output is rule ids and relative paths, never note content; --verbose
+adds the offending values on stderr. Exit code: 0 no errors, 1 errors (or
+warnings with --strict), 2 usage problem.
 
 Rules (severity):
   error   missing-type  unknown-type  bad-frontmatter  missing-required:<prop>
@@ -217,6 +220,84 @@ def lint_vault(vault: Path, schema: dict) -> tuple[int, list[Finding]]:
     return len(notes), findings
 
 
+# ---- report -----------------------------------------------------------------
+
+EXAMPLES = 5
+
+
+def family(rule: str) -> str:
+    """'missing-required:status' -> 'missing-required'."""
+    return rule.split(":", 1)[0]
+
+
+def hints(schema: dict) -> dict[str, str]:
+    """One suggestion per rule family on how to fix it, filled in from the schema."""
+    types = ", ".join(schema["types"])
+    extra = [f"`{t}`" for t, spec in schema["types"].items() if spec.get("extra") == "allow"]
+    boxes = " ".join(f"[{c}]" for c in schema.get("checkboxes", {}))
+    return {
+        "missing-type": f"Add `type:` ({types}), or move the note to inbox/.",
+        "unknown-type": f"Use one of: {types}. To keep a type of your own, add it to schema.yaml.",
+        "bad-frontmatter": "The YAML between the --- lines doesn't parse; quote values that "
+                           "contain ': ', '#' or start with '[['.",
+        "missing-required": "Fill in the property; the type's template in _kit/templates/ shows its shape.",
+        "one-of": "Set exactly one of the alternatives (for tasks and decisions: `project` or `area`).",
+        "unexpected-property": "Remove or rename it, or add it to the type in schema.yaml"
+                               + (f" (only {', '.join(extra)} notes allow extra properties)." if extra else "."),
+        "invalid-value": "Use the schema's format: dates YYYY-MM-DD, links \"[[Note]]\", lists as YAML "
+                         "lists, enums one of their values (see the type in schema.yaml).",
+        "wrong-folder": "Move it to its type's folder, in Obsidian so links update "
+                        "(--verbose shows the expected folder).",
+        "name-pattern": "Rename it to the type's pattern, e.g. `YYYY-MM-DD Title` for dated notes.",
+        "name-date-mismatch": "Make the date in the name equal the `date` property.",
+        "folder-name": "Rename the folder to lowercase-with-hyphens, in Obsidian so links update.",
+        "duplicate-name": "Rename so every note name is unique: links and embeds resolve by name.",
+        "unknown-checkbox": f"Use one of {boxes}.",
+        "task-multiple-checkboxes": "Keep one checkbox, in the home note; mark the others [>] (moved).",
+        "task-no-checkbox": "Add a checkbox line linking to the task in its home note.",
+        "task-checkbox-outside-home": "Move the checkbox to the home note (its project or area); "
+                                      "leave [>] where it was.",
+    }
+
+
+def breakdown(fam: str, items: list[Finding]) -> str:
+    """Short summary of what a group is made of, e.g. 'relation 45, birthday 44'."""
+    if fam == "duplicate-name":
+        names = len({PurePosixPath(f.path).stem for f in items})
+        return f"{names} name" + ("" if names == 1 else "s")
+    counts: dict[str, int] = {}
+    for f in items:
+        if ":" in f.rule:
+            key = f.rule.split(":", 1)[1]
+            counts[key] = counts.get(key, 0) + 1
+    top = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    text = ", ".join(f"{safe(k)} {n}" for k, n in top[:6])
+    return text + (f", +{len(top) - 6} more" if len(top) > 6 else "")
+
+
+def print_detail(f: Finding, verbose: bool) -> None:
+    if verbose and f.detail:
+        sys.stdout.flush()
+        print(f"            {safe(f.detail)}", file=sys.stderr)
+
+
+def print_grouped(findings: list[Finding], hint: dict[str, str], limit: int | None, verbose: bool) -> None:
+    groups: dict[str, list[Finding]] = {}
+    for f in findings:
+        groups.setdefault(family(f.rule), []).append(f)
+    order = sorted(groups.items(), key=lambda kv: (kv[1][0].severity != "error", -len(kv[1]), kv[0]))
+    for fam, items in order:
+        print(f"\n  {items[0].severity:<7} {fam:<26} {len(items):>5}  {breakdown(fam, items)}".rstrip())
+        print(f"          {hint.get(fam, '')}")
+        shown = items if limit is None else items[:limit]
+        for f in shown:
+            sub = f"  ({safe(f.rule.split(':', 1)[1])})" if ":" in f.rule else ""
+            print(f"            {safe(f.path)}{sub}")
+            print_detail(f, verbose)
+        if len(items) > len(shown):
+            print(f"            ... and {len(items) - len(shown)} more (--rule {fam})")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Check vault notes against schema.yaml (read-only).")
     ap.add_argument("vaults", nargs="+", type=Path, help="path of a vault")
@@ -224,12 +305,20 @@ def main() -> int:
     ap.add_argument("--strict", action="store_true", help="warnings fail the run too")
     ap.add_argument("--verbose", action="store_true", help="also print offending values, on stderr")
     ap.add_argument("-q", "--quiet", action="store_true", help="only print the summaries")
+    ap.add_argument("--rule", action="append", default=[],
+                    help="list every finding of this rule or rule family (repeatable)")
+    ap.add_argument("--all", action="store_true", help="one line per finding, ungrouped")
     args = ap.parse_args()
 
     try:
         schema = yaml.safe_load(args.schema.read_text())
     except (OSError, yaml.YAMLError) as exc:
         print(f"lint.py: cannot read schema ({type(exc).__name__})", file=sys.stderr)
+        return 2
+    hint = hints(schema)
+    unknown = [r for r in args.rule if family(r) not in hint]
+    if unknown:
+        print(f"lint.py: unknown rule {safe(unknown[0])} (rules: {', '.join(hint)})", file=sys.stderr)
         return 2
 
     failed = False
@@ -244,13 +333,16 @@ def main() -> int:
         errors = sum(f.severity == "error" for f in findings)
         warnings = len(findings) - errors
         plural = lambda n, word: f"{n} {word}" + ("" if n == 1 else "s")
-        print(f"{safe(name)}: {count} notes, {plural(errors, 'error')}, {plural(warnings, 'warning')}")
-        if not args.quiet:
-            for f in findings:
-                print(f"  {f.severity:<7} {f.rule:<30} {safe(f.path)}")
-                if args.verbose and f.detail:
-                    sys.stdout.flush()
-                    print(f"          {safe(f.detail)}", file=sys.stderr)
+        print(f"{safe(name)}: {plural(count, 'note')}, {plural(errors, 'error')}, {plural(warnings, 'warning')}")
+        shown = [f for f in findings if not args.rule or f.rule in args.rule or family(f.rule) in args.rule]
+        if args.quiet:
+            pass
+        elif args.all:
+            for f in shown:
+                print(f"  {f.severity:<7} {safe(f.rule):<30} {safe(f.path)}")
+                print_detail(f, args.verbose)
+        else:
+            print_grouped(shown, hint, None if args.rule else EXAMPLES, args.verbose)
         if errors or (args.strict and warnings):
             failed = True
     return 1 if failed else 0

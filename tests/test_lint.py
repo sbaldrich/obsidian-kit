@@ -256,8 +256,8 @@ class Cli(Base):
         other = make(self.tmp / "other", {"stray.md": "no type"})
         rc, out, _ = self.cli(str(self.vault), str(other))
         self.assertEqual(rc, 1)
-        self.assertIn(f"{self.vault}: 1 notes, 0 errors, 0 warnings", out)
-        self.assertIn(f"{other}: 1 notes, 1 error, 0 warnings", out)
+        self.assertIn(f"{self.vault}: 1 note, 0 errors, 0 warnings", out)
+        self.assertIn(f"{other}: 1 note, 1 error, 0 warnings", out)
 
     def test_refuses_home(self):
         # HOME is redirected to self.tmp, so this also proves the redirect works.
@@ -267,6 +267,82 @@ class Cli(Base):
 
     def test_not_a_directory(self):
         self.assertEqual(self.cli(str(self.tmp / "nope"))[0], 1)
+
+
+
+class Report(Base):
+    """The grouped output: one block per rule family, a hint, up to 5 example paths."""
+
+    def setUp(self):
+        super().setUp()
+        files = {f"stray{i}.md": "no type" for i in range(7)}
+        files["people/P1.md"] = "---\ntype: person\ncontext: x\nbirthday: 1\nrelation: x\n---\n"
+        files["people/P2.md"] = "---\ntype: person\ncontext: x\nbirthday: 1\n---\n"
+        for i in range(3):   # 6 duplicate-name warnings: more than the 3 errors above
+            files[f"reference/Same{i}.md"] = files[f"reference/x/Same{i}.md"] = "---\ntype: hub\n---\n"
+        make(self.vault, files)
+
+    def blocks(self, out: str) -> dict[str, list[str]]:
+        """family -> the lines of its block (header first)."""
+        result, current = {}, None
+        for line in out.splitlines():
+            if line.startswith("  ") and not line.startswith("   "):
+                current = line.split()[1]
+                result[current] = [line]
+            elif current and line.strip():
+                result[current].append(line)
+        return result
+
+    def test_groups_by_family_with_breakdown_hint_and_five_examples(self):
+        rc, out, _ = self.cli(str(self.vault))
+        self.assertEqual(rc, 1)
+        b = self.blocks(out)
+        missing = b["missing-type"]
+        self.assertRegex(missing[0], r"error\s+missing-type\s+7$")
+        self.assertIn("move the note to inbox/", missing[1])
+        self.assertEqual(sum(l.strip().startswith("stray") for l in missing), 5)
+        self.assertIn("... and 2 more (--rule missing-type)", missing[-1])
+        unexpected = b["unexpected-property"]
+        self.assertRegex(unexpected[0], r"unexpected-property\s+3  birthday 2, relation 1$")
+        self.assertIn("people/P1.md  (birthday)", out)
+        self.assertRegex(b["duplicate-name"][0], r"duplicate-name\s+6  3 names$")
+
+    def test_errors_first_then_by_count(self):
+        _, out, _ = self.cli(str(self.vault))
+        self.assertEqual(list(self.blocks(out)), ["missing-type", "unexpected-property", "duplicate-name"])
+
+    def test_rule_lists_every_path_of_a_family_or_a_rule(self):
+        _, out, _ = self.cli("--rule", "missing-type", str(self.vault))
+        self.assertEqual(list(self.blocks(out)), ["missing-type"])
+        self.assertEqual(out.count("stray"), 7)
+        self.assertNotIn("more", out)
+        _, out, _ = self.cli("--rule", "unexpected-property:relation", str(self.vault))
+        self.assertIn("people/P1.md  (relation)", out)
+        self.assertNotIn("birthday", out)
+
+    def test_unknown_rule_is_a_usage_error(self):
+        self.assertEqual(self.cli("--rule", "nope", str(self.vault))[0], 2)
+
+    def test_all_prints_one_line_per_finding(self):
+        _, out, _ = self.cli("--all", str(self.vault))
+        lines = out.splitlines()[1:]
+        self.assertEqual(len(lines), 7 + 3 + 6)
+        self.assertTrue(all(l.split()[0] in ("error", "warning") for l in lines))
+
+    def test_quiet_prints_only_the_summary(self):
+        _, out, _ = self.cli("-q", str(self.vault))
+        self.assertEqual(len(out.splitlines()), 1)
+
+    def test_every_rule_has_a_hint(self):
+        rules = {"missing-type", "unknown-type", "bad-frontmatter", "missing-required", "one-of",
+                 "unexpected-property", "invalid-value", "wrong-folder", "name-pattern",
+                 "name-date-mismatch", "folder-name", "duplicate-name", "unknown-checkbox",
+                 "task-multiple-checkboxes", "task-no-checkbox", "task-checkbox-outside-home"}
+        hints = lint.hints(SCHEMA)
+        self.assertEqual(set(hints), rules)
+        self.assertTrue(all(hints.values()))
+        self.assertIn("`option`", hints["unexpected-property"])
+        self.assertIn("[>]", hints["unknown-checkbox"])
 
 
 if __name__ == "__main__":

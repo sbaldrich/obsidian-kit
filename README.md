@@ -68,8 +68,11 @@ Needs bash, rsync, git and uv. Tested on macOS only.
   like any template, and tick it there.
 - **Lint:** `uv run tools/lint.py <vault> [...]` checks every note against
   the schema. It only reads, and prints rule ids and paths, not note content.
-  `--verbose` adds the offending values on stderr, `--strict` makes warnings
-  fail too, `-q` prints only the summary.
+  Findings are grouped by rule, most frequent first, each with a hint on how
+  to fix it and 5 example paths. `--rule <id>` lists every path for one rule
+  (`--rule missing-required` covers every property), `--all` prints one line
+  per finding, `-q` only the summary. `--verbose` adds the offending values
+  on stderr; `--strict` makes warnings fail too.
 - **Tasks:** a task note has one checkbox, in its home note. See
   `task_checkbox` in `schema.yaml` for the full rule.
 
