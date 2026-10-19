@@ -10,7 +10,11 @@
 Findings are grouped by rule, most frequent first, each with a hint on how to
 fix it and up to 5 example paths. --rule lists every path for one rule
 (`--rule missing-required` matches every property), --all prints one line per
-finding. Output is rule ids and relative paths, never note content; --verbose
+finding. --ignore <folder> hides findings for the notes under a folder;
+--under <folder> shows only those (both repeatable, relative to the vault,
+`*` and `**` allowed). Hidden notes are still read, so a duplicate name or a
+checkbox involving them still counts elsewhere.
+Output is rule ids and relative paths, never note content; --verbose
 adds the offending values on stderr. Exit code: 0 no errors, 1 errors (or
 warnings with --strict), 2 usage problem.
 
@@ -298,6 +302,22 @@ def print_grouped(findings: list[Finding], hint: dict[str, str], limit: int | No
             print(f"            ... and {len(items) - len(shown)} more (--rule {fam})")
 
 
+def folder_patterns(raw: list[str]) -> list[str]:
+    """Normalise --ignore/--under folders to vault-relative patterns; ValueError if unusable."""
+    result = []
+    for item in raw:
+        p = PurePosixPath(item)      # drops "./" and trailing slashes
+        if p.is_absolute() or not p.parts or ".." in p.parts:
+            raise ValueError(item)
+        result.append(p.as_posix())
+    return result
+
+
+def within(patterns: list[str], path: str) -> bool:
+    """Is `path` one of the folders in `patterns`, or under one?"""
+    return any(matches([p, p + "/**"], path) for p in patterns)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Check vault notes against schema.yaml (read-only).")
     ap.add_argument("vaults", nargs="+", type=Path, help="path of a vault")
@@ -308,7 +328,19 @@ def main() -> int:
     ap.add_argument("--rule", action="append", default=[],
                     help="list every finding of this rule or rule family (repeatable)")
     ap.add_argument("--all", action="store_true", help="one line per finding, ungrouped")
+    ap.add_argument("--ignore", action="append", default=[], metavar="FOLDER",
+                    help="hide findings under this vault folder (repeatable)")
+    ap.add_argument("--under", action="append", default=[], metavar="FOLDER",
+                    help="show only findings under this vault folder (repeatable)")
     args = ap.parse_args()
+    try:
+        skip = folder_patterns(args.ignore)
+        only = folder_patterns(args.under)
+    except ValueError as exc:
+        print(f"lint.py: --ignore and --under need a folder inside the vault, got {safe(str(exc))!r}",
+              file=sys.stderr)
+        return 2
+    shown_path = lambda path: (not only or within(only, path)) and not within(skip, path)
 
     try:
         schema = yaml.safe_load(args.schema.read_text())
@@ -330,10 +362,20 @@ def main() -> int:
             failed = True
             continue
         count, findings = lint_vault(resolved, schema)
+        hidden = 0
+        if skip or only:
+            notes = find_notes(resolved)
+            for flag, patterns in (("--ignore", skip), ("--under", only)):
+                for p in patterns:
+                    if not any(within([p], n) for n in notes):
+                        print(f"lint.py: {flag} {safe(p)} matches no note in {safe(name)}", file=sys.stderr)
+            hidden = sum(not shown_path(n) for n in notes)
+            findings = [f for f in findings if shown_path(f.path)]
         errors = sum(f.severity == "error" for f in findings)
         warnings = len(findings) - errors
         plural = lambda n, word: f"{n} {word}" + ("" if n == 1 else "s")
-        print(f"{safe(name)}: {plural(count, 'note')}, {plural(errors, 'error')}, {plural(warnings, 'warning')}")
+        notes_text = plural(count - hidden, "note") + (f" ({hidden} hidden)" if skip or only else "")
+        print(f"{safe(name)}: {notes_text}, {plural(errors, 'error')}, {plural(warnings, 'warning')}")
         shown = [f for f in findings if not args.rule or f.rule in args.rule or family(f.rule) in args.rule]
         if args.quiet:
             pass

@@ -357,5 +357,74 @@ class Report(Base):
         self.assertIn("[>]", hints["unknown-checkbox"])
 
 
+
+class Ignore(Base):
+    def setUp(self):
+        super().setUp()
+        make(self.vault, {
+            "reference/Hub.md": "---\ntype: hub\n---\n",
+            "legacy/Old.md": "no type",
+            "legacy/Deep/Older.md": "no type",
+            "legacy-2/Kept.md": "no type",
+            "areas/a/old/Stale.md": "no type",
+            "reference/Twin.md": "---\ntype: hub\n---\n",
+            "legacy/Twin.md": "no type",
+        })
+
+    def test_findings_under_an_ignored_folder_are_hidden(self):
+        rc, out, _ = self.cli("--all", "--ignore", "legacy", "--ignore", "areas/*/old", str(self.vault))
+        self.assertIn(": 3 notes (4 hidden), 1 error, 1 warning", out)
+        self.assertNotIn("legacy/", out)
+        self.assertNotIn("Stale", out)
+        self.assertIn("legacy-2/Kept.md", out)      # a folder boundary, not a prefix
+        self.assertEqual(rc, 1)
+
+    def test_ignored_notes_still_count_for_duplicates(self):
+        _, out, _ = self.cli("--all", "--ignore", "legacy", str(self.vault))
+        self.assertIn("duplicate-name", out)
+        self.assertIn("reference/Twin.md", out)
+
+    def test_exit_code_only_counts_what_is_shown(self):
+        make(self.vault, {"reference/Twin.md": "---\ntype: hub\n---\n", "legacy-2/Kept.md": "---\ntype: hub\n---\n"})
+        rc, out, _ = self.cli("--ignore", "legacy", "--ignore", "legacy-2", "--ignore", "areas", str(self.vault))
+        self.assertEqual(rc, 0, out)
+
+    def test_accepts_dot_slash_and_trailing_slash(self):
+        _, out, err = self.cli("--ignore", "./legacy/", str(self.vault))
+        self.assertIn("(3 hidden)", out)
+        self.assertEqual(err, "")
+
+    def test_rejects_paths_outside_the_vault(self):
+        for bad in ("/legacy", "../x", "a/../../b", "/", "."):
+            self.assertEqual(self.cli("--ignore", bad, str(self.vault))[0], 2, bad)
+
+    def test_warns_when_a_pattern_matches_nothing(self):
+        rc, _, err = self.cli("--ignore", "legacyy", str(self.vault))
+        self.assertIn("--ignore legacyy matches no note", err)
+        self.assertEqual(rc, 1)
+        _, _, err = self.cli("--under", "nowhere", str(self.vault))
+        self.assertIn("--under nowhere matches no note", err)
+
+    def test_under_shows_only_that_folder(self):
+        make(self.vault, {"Root.md": "no type"})
+        rc, out, _ = self.cli("--all", "--under", "legacy", str(self.vault))
+        self.assertIn(": 3 notes (5 hidden), 3 errors, 2 warnings", out)
+        self.assertIn("legacy/Deep/Older.md", out)
+        self.assertNotIn("legacy-2", out)
+        self.assertNotIn("Root.md", out)
+        self.assertNotIn("reference/", out)
+        self.assertEqual(rc, 1)
+
+    def test_under_several_folders_and_with_ignore(self):
+        _, out, _ = self.cli("--all", "--under", "legacy", "--under", "areas", "--ignore", "legacy/Deep",
+                             str(self.vault))
+        self.assertIn("legacy/Old.md", out)
+        self.assertIn("areas/a/old/Stale.md", out)
+        self.assertNotIn("Older.md", out)
+
+    def test_under_rejects_paths_outside_the_vault(self):
+        self.assertEqual(self.cli("--under", "../x", str(self.vault))[0], 2)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

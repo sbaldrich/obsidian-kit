@@ -71,8 +71,12 @@ Needs bash, rsync, git and uv. Tested on macOS only.
   Findings are grouped by rule, most frequent first, each with a hint on how
   to fix it and 5 example paths. `--rule <id>` lists every path for one rule
   (`--rule missing-required` covers every property), `--all` prints one line
-  per finding, `-q` only the summary. `--verbose` adds the offending values
-  on stderr; `--strict` makes warnings fail too.
+  per finding, `-q` only the summary. `--ignore legacy` hides findings for
+  notes under a folder you don't want to fix now; `--under people` shows only
+  that folder's (both repeatable; `*` and `**` allowed). Hidden notes still
+  count for duplicate names and task checkboxes.
+  `--verbose` adds the offending values on stderr; `--strict` makes warnings
+  fail too.
 - **Tasks:** a task note has one checkbox, in its home note. See
   `task_checkbox` in `schema.yaml` for the full rule.
 
