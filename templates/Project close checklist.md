@@ -3,7 +3,7 @@
 ### Decide the outcome
 
 - [ ] Goal met, or stopped? Set the project `status` to `done` or `cancelled`
-- [ ] Set `target` or note the real end date if it matters
+- [ ] Set `end` to the date it closed
 
 ### Resolve the loose ends
 

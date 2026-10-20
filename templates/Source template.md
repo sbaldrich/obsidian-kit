@@ -5,7 +5,7 @@ author:
 url:
 status: to-read
 start:
-finished:
+end:
 ---
 
 ## Summary

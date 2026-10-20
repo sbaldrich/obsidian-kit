@@ -16,7 +16,7 @@ views:
       - kind
       - author
       - start
-      - finished
+      - end
     sort:
       - property: file.name
         direction: ASC

@@ -18,7 +18,7 @@
 ### Knowledge
 
 - [ ] Review hubs; prune or merge reference notes ([[Reference.base#Hubs]])
-- [ ] Sources still `reading` are finished or `abandoned` ([[Sources.base#Reading]])
+- [ ] Sources still `reading` are `done` or `abandoned` ([[Sources.base#Reading]])
 
 ### Housekeeping
 

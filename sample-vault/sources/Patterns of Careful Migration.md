@@ -5,7 +5,7 @@ author: "Ada Lindqvist"
 url:
 status: reading
 start: 2026-09-20
-finished:
+end:
 ---
 
 ## Summary

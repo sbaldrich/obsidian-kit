@@ -23,6 +23,9 @@
 #   name. Reference notes: a specific concept name.
 # - Dates YYYY-MM-DD; links are quoted wikilinks ("[[Note]]"); lists are YAML
 #   lists. Enums allow only their listed values.
+# - Date properties: `date` for a note about one day (meeting, 1:1, daily);
+#   `start` and `end` for something that spans time (project, source). No
+#   `created`: the date in the name, `date` or `start` already says when.
 # - Not every folder exists in every vault. _kit/ is the deployed kit: never
 #   edit it in a vault.
 #
@@ -94,12 +97,13 @@ types:
     folder: [projects/*]
     sections: [Goal, Tasks, {Notes: ["Linked notes.base#Tasks", "Linked notes.base#Meetings", "Linked notes.base#Decisions"]}]
     required: [status, start]
-    optional: [area, target]
+    optional: [area, target, end]
     props:
       status: {type: enum, values: [active, paused, done, cancelled]}
       area: {type: link}
       start: {type: date}
-      target: {type: date}
+      target: {type: date}     # planned end
+      end: {type: date}        # actual end
 
   task:
     # A task big enough to need its own note.
@@ -234,14 +238,14 @@ types:
     folder: [sources]
     sections: [Summary, Takeaways]
     required: [kind, author, status]
-    optional: [url, start, finished]
+    optional: [url, start, end]
     props:
       kind: {type: enum, values: [book, article, paper, course, talk]}
       author: {type: string}
       url: {type: string}
       status: {type: enum, values: [to-read, reading, done, abandoned]}
       start: {type: date}
-      finished: {type: date}
+      end: {type: date}
 
   option:
     # A candidate being compared (house, hotel, employer).

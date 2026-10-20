@@ -9,7 +9,7 @@
     "cycle": "number",
     "date": "date",
     "direction": "text",
-    "finished": "date",
+    "end": "date",
     "kind": "text",
     "person": "text",
     "project": "text",

@@ -4,6 +4,7 @@ status: active
 area:
 start: {{date:YYYY-MM-DD}}
 target:
+end:
 ---
 
 ## Goal
