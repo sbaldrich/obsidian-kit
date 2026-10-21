@@ -23,9 +23,10 @@
 #   name. Reference notes: a specific concept name.
 # - Dates YYYY-MM-DD; links are quoted wikilinks ("[[Note]]"); lists are YAML
 #   lists. Enums allow only their listed values.
-# - Date properties: `date` for a note about one day (meeting, 1:1, daily);
-#   `start` and `end` for something that spans time (project, source). No
-#   `created`: the date in the name, `date` or `start` already says when.
+# - Date properties: `date` for a note about one day (meeting, 1:1, event,
+#   daily); `start` and `end` for something that spans time (project,
+#   source). No `created`: the date in the name, `date` or `start` already
+#   says when.
 # - Not every folder exists in every vault. _kit/ is the deployed kit: never
 #   edit it in a vault.
 #
@@ -135,14 +136,18 @@ types:
       area: {type: link}
       attendees: {type: links}
 
-  incident:
-    # An event within an area (e.g. an on-call incident).
-    folder: [areas/*]
-    sections: [Summary, Timeline, Follow-ups]
+  event:
+    # Something that happened in a project or area and deserves its own note
+    # (an outage, a contractor visit). Smaller things: a linked line in the
+    # daily note.
+    folder: [projects/*, areas/*]
+    sections: [What happened, Follow-ups]
     name: ['^\d{4}-\d{2}-\d{2} .+']
-    required: [date, area]
+    required: [date]
+    one_of: [project, area]
     props:
       date: {type: date}
+      project: {type: link}
       area: {type: link}
 
   person:

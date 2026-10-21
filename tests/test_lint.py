@@ -123,6 +123,14 @@ class TypeAndProperties(Base):
             ("unexpected-property:alias", "projects/p/C.md"),  # only the plural is Obsidian's
         })
 
+    def test_event_belongs_to_a_project_or_an_area(self):
+        f = self.findings({
+            "projects/k/2026-10-01 Contractor visit.md": '---\ntype: event\ndate: 2026-10-01\nproject: "[[K]]"\n---\n',
+            "areas/home/2026-10-02 Roof leak.md": '---\ntype: event\ndate: 2026-10-02\narea: "[[Home]]"\n---\n',
+            "areas/home/2026-10-03 Loose.md": "---\ntype: event\ndate: 2026-10-03\n---\n",
+        })
+        self.assertEqual(f, {("one-of", "areas/home/2026-10-03 Loose.md")})
+
     def test_invalid_values(self):
         f = self.findings({
             "records/impact/2026-01-01 A.md": '---\ntype: impact\ndate: yesterday\ncompetency: Tech Lead\ncycle: 26\n---\n',

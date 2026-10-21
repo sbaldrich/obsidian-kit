@@ -263,7 +263,7 @@ def hints(schema: dict) -> dict[str, str]:
         "bad-frontmatter": "The YAML between the --- lines doesn't parse; quote values that "
                            "contain ': ', '#' or start with '[['.",
         "missing-required": "Fill in the property; the type's template in _kit/templates/ shows its shape.",
-        "one-of": "Set exactly one of the alternatives (for tasks and decisions: `project` or `area`).",
+        "one-of": "Set exactly one of the alternatives (for tasks, decisions and events: `project` or `area`).",
         "unexpected-property": "Remove or rename it, or add it to its type (or to all_types) in schema.yaml"
                                + (f" (only {', '.join(extra)} notes allow extra properties)." if extra else "."),
         "invalid-value": "Use the schema's format: dates YYYY-MM-DD, links \"[[Note]]\", lists as YAML "

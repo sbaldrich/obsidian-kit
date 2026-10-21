@@ -1,11 +1,10 @@
 ---
-type: incident
+type: event
 date: {{date:YYYY-MM-DD}}
+project:
 area:
 ---
 
-## Summary
-
-## Timeline
+## What happened
 
 ## Follow-ups
