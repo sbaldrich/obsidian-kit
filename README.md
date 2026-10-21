@@ -57,6 +57,20 @@ Needs bash, rsync, git and uv. Tested on macOS only.
 
 4. Check the vault: `uv run tools/lint.py ~/vaults/work`.
 
+## Upgrade a vault
+
+After pulling kit changes. If the vault is a git repo, commit it first.
+
+1. `./install.sh --dry-run <vault>`, then `./install.sh <vault>`. Files the
+   kit no longer ships are removed from `_kit/`.
+2. If `types.json` changed, re-run step 3 above (Obsidian closed).
+3. `uv run tools/lint.py <vault>`. Renamed types and properties show up as
+   `unknown-type` or `unexpected-property:<old name>`;
+   `git log --oneline --grep '^Schema:'` lists the renames. Fix them in bulk
+   with `--quickfix` (see "Fix in an editor" below).
+4. Lint doesn't check links. `grep -rln --include='*.md' --exclude-dir=_kit '_kit/' <vault>`
+   lists notes that point into the kit, in case one of its files is gone.
+
 ## Use it
 
 - **New note:** create it in its folder, then insert `<Type> template` (Templates:
