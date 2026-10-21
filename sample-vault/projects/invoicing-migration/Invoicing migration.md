@@ -23,4 +23,6 @@ Move invoice generation to the new service without downtime.
 
 ![[Linked notes.base#Meetings]]
 
+![[Linked notes.base#Events]]
+
 ![[Linked notes.base#Decisions]]

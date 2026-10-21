@@ -9,4 +9,6 @@ status: active
 
 ## Notes
 
+![[Linked notes.base#Events]]
+
 ![[Linked notes.base#By type]]

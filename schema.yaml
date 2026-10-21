@@ -96,7 +96,7 @@ types:
   project:
     # Home note of a project (a goal with an end).
     folder: [projects/*]
-    sections: [Goal, Tasks, {Notes: ["Linked notes.base#Tasks", "Linked notes.base#Meetings", "Linked notes.base#Decisions"]}]
+    sections: [Goal, Tasks, {Notes: ["Linked notes.base#Tasks", "Linked notes.base#Meetings", "Linked notes.base#Events", "Linked notes.base#Decisions"]}]
     required: [status, start]
     optional: [area, target, end]
     props:
@@ -118,7 +118,7 @@ types:
   area:
     # Home note of an ongoing responsibility.
     folder: [areas/*]
-    sections: [Scope, Tasks, {Notes: ["Linked notes.base#By type"]}]
+    sections: [Scope, Tasks, {Notes: ["Linked notes.base#Events", "Linked notes.base#By type"]}]
     required: [status]
     props:
       status: {type: enum, values: [active, closed]}

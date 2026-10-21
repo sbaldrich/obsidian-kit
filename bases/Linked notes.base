@@ -53,6 +53,17 @@ views:
       - property: date
         direction: DESC
   - type: table
+    name: Events
+    filters:
+      and:
+        - type == "event"
+    order:
+      - date
+      - file.name
+    sort:
+      - property: date
+        direction: DESC
+  - type: table
     name: Decisions
     filters:
       and:
